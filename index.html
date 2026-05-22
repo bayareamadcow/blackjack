@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thunder Valley 风格双副牌 21 点训练台</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero panel">
+      <div class="hero-copy">
+        <p id="hero-eyebrow" class="eyebrow"></p>
+        <h1 id="hero-title"></h1>
+        <p id="hero-text" class="hero-text"></p>
+      </div>
+
+      <div class="hero-actions">
+        <div class="language-switch" role="group" aria-label="Language switch">
+          <button class="lang-button" data-lang="zh" type="button">中文</button>
+          <button class="lang-button" data-lang="en" type="button">English</button>
+        </div>
+        <button id="new-shoe-btn" class="ghost-button" type="button"></button>
+        <button id="toggle-count-btn" class="ghost-button" type="button"></button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel side-panel">
+        <div class="panel-block">
+          <div class="section-heading">
+            <h2 id="finance-heading"></h2>
+            <span id="table-limit-pill" class="pill"></span>
+          </div>
+
+          <div class="stat-grid">
+            <div class="stat-card">
+              <span id="bankroll-label" class="stat-label"></span>
+              <strong id="bankroll-value">$5,000</strong>
+            </div>
+            <div class="stat-card">
+              <span id="bet-stat-label" class="stat-label"></span>
+              <strong id="bet-value">$25</strong>
+            </div>
+            <div class="stat-card">
+              <span id="round-stat-label" class="stat-label"></span>
+              <strong id="round-value">0</strong>
+            </div>
+            <div class="stat-card">
+              <span id="shoe-stat-label" class="stat-label"></span>
+              <strong id="shoe-value">1</strong>
+            </div>
+          </div>
+
+          <label id="bet-input-label" class="bet-label" for="bet-input"></label>
+          <input id="bet-input" class="bet-input" type="number" min="25" max="500" step="25" value="25">
+
+          <div id="chip-row" class="chip-row" aria-label="Quick bets">
+            <button class="chip-button" data-bet="25" type="button">$25</button>
+            <button class="chip-button" data-bet="50" type="button">$50</button>
+            <button class="chip-button" data-bet="100" type="button">$100</button>
+            <button class="chip-button" data-bet="250" type="button">$250</button>
+            <button class="chip-button" data-bet="500" type="button">$500</button>
+          </div>
+        </div>
+
+        <div class="panel-block">
+          <div class="section-heading">
+            <h2 id="rules-heading"></h2>
+            <span id="rules-pill" class="pill accent"></span>
+          </div>
+          <ul id="rule-list" class="rule-list"></ul>
+        </div>
+      </section>
+
+      <section class="table-panel">
+        <div class="dealer-zone">
+          <div class="zone-header">
+            <div>
+              <p id="dealer-seat-label" class="zone-label"></p>
+              <h2 id="dealer-heading"></h2>
+            </div>
+            <div id="dealer-total" class="zone-total"></div>
+          </div>
+          <div id="dealer-cards" class="card-row" aria-live="polite"></div>
+        </div>
+
+        <div id="table-status" class="table-status" aria-live="polite"></div>
+
+        <div id="controls" class="controls" aria-label="Round controls">
+          <button id="deal-btn" class="primary-button" type="button"></button>
+          <button id="hit-btn" type="button"></button>
+          <button id="stand-btn" type="button"></button>
+          <button id="double-btn" type="button"></button>
+          <button id="split-btn" type="button"></button>
+        </div>
+
+        <div class="player-zone">
+          <div class="zone-header">
+            <div>
+              <p id="player-seat-label" class="zone-label"></p>
+              <h2 id="player-heading"></h2>
+            </div>
+            <div id="player-summary" class="zone-total"></div>
+          </div>
+          <div id="player-hands" class="hands-grid"></div>
+        </div>
+      </section>
+
+      <aside class="panel practice-panel">
+        <div class="panel-block">
+          <div class="section-heading">
+            <h2 id="count-heading"></h2>
+            <span id="count-pill" class="pill"></span>
+          </div>
+
+          <div class="count-grid">
+            <div class="count-card">
+              <span id="running-count-label" class="stat-label"></span>
+              <strong id="running-count"></strong>
+            </div>
+            <div class="count-card">
+              <span id="true-count-label" class="stat-label"></span>
+              <strong id="true-count"></strong>
+            </div>
+            <div class="count-card">
+              <span id="cards-left-label" class="stat-label"></span>
+              <strong id="cards-left">104</strong>
+            </div>
+            <div class="count-card">
+              <span id="cards-seen-label" class="stat-label"></span>
+              <strong id="cards-seen">0</strong>
+            </div>
+          </div>
+
+          <div class="shoe-meter">
+            <div class="shoe-bar">
+              <div id="shoe-fill" class="shoe-fill"></div>
+              <div id="cut-marker" class="cut-marker"></div>
+            </div>
+            <div class="shoe-meta">
+              <span id="shoe-status"></span>
+              <span id="shuffle-flag"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-block">
+          <div class="section-heading">
+            <h2 id="shortcuts-heading"></h2>
+            <span id="shortcuts-pill" class="pill"></span>
+          </div>
+          <ul id="shortcut-list" class="shortcut-list"></ul>
+        </div>
+
+        <div class="panel-block">
+          <div class="section-heading">
+            <h2 id="log-heading"></h2>
+            <span id="log-pill" class="pill"></span>
+          </div>
+          <ul id="log-list" class="log-list"></ul>
+        </div>
+
+        <div class="panel-block sources">
+          <div class="section-heading">
+            <h2 id="sources-heading"></h2>
+            <span id="sources-pill" class="pill"></span>
+          </div>
+          <p id="sources-text"></p>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
