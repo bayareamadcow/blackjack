@@ -4,16 +4,18 @@ const BET_STEP = 25;
 const DECK_COUNT = 2;
 const CARDS_PER_DECK = 52;
 const CUT_CARD_REMAINING = 15;
-const MAX_PLAYER_HANDS = 5;
+const MAX_TOTAL_HANDS = 5;
+const DEFAULT_OPENING_HANDS = 1;
 const STARTING_BANKROLL = 5000;
 const LOG_LIMIT = 10;
 const STORAGE_LANGUAGE_KEY = "doubleDeckTrainerLanguage";
+const STORAGE_OPENING_HANDS_KEY = "doubleDeckTrainerOpeningHands";
 
 const SUITS = [
-  { code: "H", name: "Hearts", red: true },
-  { code: "D", name: "Diamonds", red: true },
-  { code: "C", name: "Clubs", red: false },
-  { code: "S", name: "Spades", red: false },
+  { code: "H", red: true },
+  { code: "D", red: true },
+  { code: "C", red: false },
+  { code: "S", red: false },
 ];
 
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -59,7 +61,7 @@ const SHORTCUTS = [
   { key: "C", actionKey: "shortcutActions.toggleCount" },
 ];
 
-const LANGUAGES = {
+const COPY = {
   zh: {
     meta: {
       title: "Thunder Valley 风格双副牌 21 点训练台",
@@ -67,8 +69,8 @@ const LANGUAGES = {
     },
     hero: {
       eyebrow: "Double Deck Blackjack Trainer",
-      title: "Thunder Valley 风格双副牌 21 点",
-      text: "按双副牌 pitch game 的节奏做了一张本地训练台，适合一边打牌一边练 Hi-Lo 算牌。",
+      title: "Thunder Valley 风格台面练习",
+      text: "更接近赌场俯视桌面的双副牌 21 点练习台，支持 1 到 5 手开局、Hi-Lo 算牌和中英文切换。",
     },
     buttons: {
       newShoe: "新 Shoe",
@@ -81,50 +83,64 @@ const LANGUAGES = {
       split: "Split",
     },
     sections: {
-      finance: "资金和下注",
-      rules: "规则设定",
-      dealer: "庄家",
-      player: "你的手牌",
-      count: "算牌练习",
+      finance: "资金和局况",
+      wager: "下注设定",
+      openingHands: "开局手数",
+      count: "算牌面板",
+      rules: "当前规则",
       shortcuts: "快捷键",
       logs: "牌桌记录",
       sources: "规则来源",
-    },
-    zoneLabels: {
-      dealer: "Dealer",
-      player: "Player",
+      dealer: "庄家",
     },
     pills: {
       tableLimit: "台面限红 $25 - $500",
-      rules: "Thunder Valley 风格 + 自定义",
+      wager: "每手同注",
+      openingHands: "可选 1-5 手",
       count: "Hi-Lo",
-      shortcuts: "更顺手",
+      rules: "Thunder Valley 风格 + 自定义",
+      shortcuts: "快速操作",
       logs: "最近 10 条",
       sources: "2026-05-22 查证",
     },
     stats: {
       bankroll: "Bankroll",
-      bet: "当前下注",
+      bet: "当前单手下注",
       round: "第几局",
       shoe: "第几个 Shoe",
-      betInput: "下注金额",
+      betInput: "单手下注金额",
+      openingBet: "单手下注",
+      tableExposure: "本局总押注",
       runningCount: "Running Count",
       trueCount: "True Count",
       cardsLeft: "牌靴剩余",
       cardsSeen: "已发出",
+    },
+    accessibility: {
+      quickBets: "快速下注",
+      roundControls: "牌局操作",
+      languageSwitch: "语言切换",
+      openingHandsSelector: "开局手数选择",
+      cutMarker: "cut card 约在剩余 15 张",
+    },
+    table: {
+      banner: "PLAYER 21 赔 3 : 2",
+      subbanner: "庄家 soft 17 必须要牌 · 仅 9 / 10 / 11 可 Double",
+      footnote: "开局可选 1 到 5 手 · 普通对子总手数上限 5 · A 只可分一次",
+      seat: "位置 {index}",
+      emptyActive: "已预留开局位置",
+      emptyIdle: "空位置",
+      down: "盖牌",
     },
     rules: {
       items: [
         "双副牌，庄家 soft 17 必须继续要牌。",
         "只允许在前两张合计 9 / 10 / 11 时 double。",
         "A,A 只能 split 一次，分完后每手只补一张并自动停牌。",
-        "其他对子最多可分到 5 手牌。",
+        "总手数上限为 5，所以开局如果已经选了 5 手，就不能再 split。",
         "剩余约 15 张牌时，当前局打完后进入下一个 shoe。",
-        "黑杰克按 3:2 结算，暂不做保险和边注。",
+        "这是自定义练习规则：只要 player 最终做成 21 并赢下该手，就按 3:2 奖励。",
       ],
-    },
-    shortcuts: {
-      empty: "还没有快捷键。",
     },
     shortcutActions: {
       deal: "发牌",
@@ -135,60 +151,50 @@ const LANGUAGES = {
       toggleCount: "显示 / 隐藏计数",
     },
     sources: {
-      bodyHtml: "公开规则主要参考 Thunder Valley 官方的 <a href=\"https://thundervalleyresort.com/casino/table-games/blackjack\" target=\"_blank\" rel=\"noreferrer\">Blackjack 页面</a> 和 <a href=\"https://www.thundervalleyresort.com/getmedia/blackjack-how-to-play-pdf\" target=\"_blank\" rel=\"noreferrer\">How To Play PDF</a>。最多 5 手牌和语言切换属于这张训练台的自定义设定。",
-    },
-    accessibility: {
-      quickBets: "快速下注",
-      roundControls: "牌局操作",
-      languageSwitch: "语言切换",
-      cutMarker: "cut card 约在剩余 15 张",
+      bodyHtml: "公开规则主要参考 Thunder Valley 官方的 <a href=\"https://thundervalleyresort.com/casino/table-games/blackjack\" target=\"_blank\" rel=\"noreferrer\">Blackjack 页面</a> 和 <a href=\"https://www.thundervalleyresort.com/getmedia/blackjack-how-to-play-pdf\" target=\"_blank\" rel=\"noreferrer\">How To Play PDF</a>。开局 1-5 手与“任意 21 赢 3:2”属于这张训练台的自定义练习规则。",
     },
     common: {
       hidden: "隐藏中",
-      waiting: "等待发牌",
-      hand: "手牌",
-      down: "盖牌",
-      push: "Push",
       dealerTotalUnknown: "总点数: ?",
       dealerUpcard: "明牌: {total}",
       dealerTotal: "总点数: {total}",
       countDecksRemaining: "剩余约 {decks} decks。",
       countShuffleNext: "切牌位已到，下一局自动换 shoe。",
       cutCardLabel: "cut card: {count} 张",
-      shoeStatusFresh: "新 shoe，计数归零。",
       noLogs: "还没有牌桌记录。",
-      noShortcuts: "还没有快捷键。",
-      inactiveHandStatus: "进行中",
-      awaitingSecondCard: "等待补牌",
-      softSuffix: " (soft)",
       handNumber: "手牌 {index}",
-      logShoeNumber: "第 {shoe} 个 shoe",
-      roundNumber: "第 {round} 局",
-      handOrdinal: "第 {hand} 手牌",
-      cardsDealtPlaceholder: "手牌",
-      roundCancelled: "当前局已取消",
-      and: "和",
+      statusPrefix: "状态: {state}",
+      totalPrefix: "点数: {total}{soft}",
+      softSuffix: " (soft)",
+      waitingSecondCard: "等待补第二张",
+      inProgress: "进行中",
+      waitingDeal: "等待发牌",
+      waitingBet: "准备中",
+      push: "Push",
+      seatSelected: "开局启用",
+      seatInactive: "未启用",
+      spotPlaceholder: "手牌",
       autoShuffleNote: "。下局自动换 shoe。",
       noAutoShuffleNote: "。",
     },
     status: {
-      adjustBet: "调好注码后，按“发牌”开始。",
       ready: "练习台已就绪，新 shoe 洗好了。",
-      bankrollLow: "Bankroll 不够，先把注码降下来。",
+      adjustBet: "调好注码和开局手数后，按“发牌”开始。",
+      bankrollLow: "Bankroll 不够覆盖这一局的总押注，先降注或减少开局手数。",
       autoNewShoe: "切牌位到了，自动进入下一个 shoe。",
       manualNewShoeActive: "当前局已取消，手动换了一个新 shoe。",
       manualNewShoeIdle: "手动换了一个新 shoe。",
       currentHandTurn: "轮到第 {hand} 手牌。",
       currentHandContinue: "第 {hand} 手牌继续行动。",
       dealerBlackjack: "庄家是 blackjack。",
-      playerBlackjack: "你起手就是 blackjack。",
+      openingTwentyOne: "有手牌起手 21，已自动停牌等待结算。",
       dealerSkips: "你的手都爆掉了，庄家不用补牌。",
       dealerDone: "庄家行动结束。",
       roundSummary: "{reason} 本局结果：赢 {wins}，输 {losses}，Push {pushes}{shuffleNote}",
     },
     logs: {
       shoeReady: "第 {shoe} 个 shoe 已洗好，running count 归零。",
-      roundStart: "第 {round} 局开始，下注 {bet}。",
+      roundStart: "第 {round} 局开始，开 {spots} 手，每手下注 {bet}。",
       handBust: "第 {hand} 手牌爆牌。",
       handAutoStand21: "第 {hand} 手牌到 21，自动停牌。",
       handStand: "第 {hand} 手牌选择停牌。",
@@ -200,15 +206,15 @@ const LANGUAGES = {
       shoeEmpty: "牌靴被抽空了，已自动重洗。",
       cancelledRefund: "当前局已取消，退回桌上筹码 {refund}。",
     },
-    handResult: {
+    results: {
       bust: "爆牌",
-      autoStand21: "21 自动停牌",
+      auto21: "21 自动停牌",
       stand: "停牌",
       doubleBust: "Double 后爆牌",
       doubleDone: "Double 完成",
       splitAcesAuto: "分 A 自动停牌",
       win: "赢 {amount}",
-      blackjackWin: "Blackjack 赢 {amount}",
+      twentyOneWin: "21 奖励赢 {amount}",
       push: "Push",
       dealerBlackjack: "庄家 blackjack",
       lose: "输",
@@ -217,21 +223,11 @@ const LANGUAGES = {
       split: "已分牌",
       splitAces: "分 A",
       doubled: "Double",
-      blackjack: "Blackjack",
+      active: "当前手",
+      blackjackStyle21: "21 赔 3:2",
       bust: "爆牌",
       push: "Push",
       win: "赢",
-    },
-    playerSummary: {
-      waiting: "等待发牌",
-      active: "{count} 手牌，当前第 {index} 手",
-      settled: "{count} 手牌",
-    },
-    handMeta: {
-      total: "点数: {total}{soft}",
-      state: "状态: {state}",
-      waiting: "发牌后这里会显示你的手牌、下注和结果。",
-      waitingBet: "等待下注",
     },
   },
   en: {
@@ -241,8 +237,8 @@ const LANGUAGES = {
     },
     hero: {
       eyebrow: "Double Deck Blackjack Trainer",
-      title: "Thunder Valley Style Double Deck Blackjack",
-      text: "A local practice table built around a double-deck pitch-game rhythm, so you can play hands and drill Hi-Lo counting at the same time.",
+      title: "Thunder Valley Style Table Trainer",
+      text: "A top-down casino-table practice layout with 1 to 5 opening hands, Hi-Lo counting, and a bilingual UI.",
     },
     buttons: {
       newShoe: "New Shoe",
@@ -255,50 +251,64 @@ const LANGUAGES = {
       split: "Split",
     },
     sections: {
-      finance: "Bankroll and Bets",
-      rules: "Rule Setup",
-      dealer: "Dealer",
-      player: "Your Hands",
-      count: "Count Practice",
+      finance: "Bankroll and Round",
+      wager: "Wager Setup",
+      openingHands: "Opening Hands",
+      count: "Count Panel",
+      rules: "Current Rules",
       shortcuts: "Hotkeys",
       logs: "Table Log",
       sources: "Rules Sources",
-    },
-    zoneLabels: {
       dealer: "Dealer",
-      player: "Player",
     },
     pills: {
       tableLimit: "Table limits $25 - $500",
-      rules: "Thunder Valley Style + Custom",
+      wager: "Same bet per hand",
+      openingHands: "Choose 1-5 hands",
       count: "Hi-Lo",
-      shortcuts: "Faster Flow",
+      rules: "Thunder Valley Style + Custom",
+      shortcuts: "Quick Play",
       logs: "Last 10 entries",
       sources: "Verified on May 22, 2026",
     },
     stats: {
       bankroll: "Bankroll",
-      bet: "Current Bet",
+      bet: "Bet per Hand",
       round: "Round",
       shoe: "Shoe",
-      betInput: "Bet Amount",
+      betInput: "Bet Amount per Hand",
+      openingBet: "Per-Hand Bet",
+      tableExposure: "Total Table Action",
       runningCount: "Running Count",
       trueCount: "True Count",
       cardsLeft: "Cards Left",
       cardsSeen: "Cards Dealt",
+    },
+    accessibility: {
+      quickBets: "Quick bets",
+      roundControls: "Round controls",
+      languageSwitch: "Language switch",
+      openingHandsSelector: "Opening hands selector",
+      cutMarker: "cut card with about 15 cards remaining",
+    },
+    table: {
+      banner: "PLAYER 21 PAYS 3 TO 2",
+      subbanner: "Dealer hits soft 17 · Double only on 9 / 10 / 11",
+      footnote: "Choose 1 to 5 opening hands · Max total hands 5 · Aces may be split once",
+      seat: "Seat {index}",
+      emptyActive: "Reserved opening spot",
+      emptyIdle: "Empty spot",
+      down: "DOWN",
     },
     rules: {
       items: [
         "Two decks, and the dealer must hit soft 17.",
         "Double is allowed only on the first two cards totaling 9, 10, or 11.",
         "A,A may be split only once, and each split ace hand receives one card then auto-stands.",
-        "All other pairs may be split up to a total of 5 hands.",
+        "The total hand cap is 5, so if you open 5 hands at the start you cannot split anymore.",
         "When about 15 cards remain, the next round starts a new shoe.",
-        "Blackjack pays 3:2. Insurance and side bets are not included in this trainer.",
+        "This trainer uses a custom rule: any player hand that finishes at 21 and wins pays 3:2.",
       ],
-    },
-    shortcuts: {
-      empty: "No hotkeys configured.",
     },
     shortcutActions: {
       deal: "Deal",
@@ -309,60 +319,50 @@ const LANGUAGES = {
       toggleCount: "Show / hide count",
     },
     sources: {
-      bodyHtml: "The public rules reference the official Thunder Valley <a href=\"https://thundervalleyresort.com/casino/table-games/blackjack\" target=\"_blank\" rel=\"noreferrer\">Blackjack page</a> and <a href=\"https://www.thundervalleyresort.com/getmedia/blackjack-how-to-play-pdf\" target=\"_blank\" rel=\"noreferrer\">How To Play PDF</a>. The 5-hand split cap and language switch are custom trainer settings.",
-    },
-    accessibility: {
-      quickBets: "Quick bets",
-      roundControls: "Round controls",
-      languageSwitch: "Language switch",
-      cutMarker: "cut card with about 15 cards remaining",
+      bodyHtml: "The public rules reference the official Thunder Valley <a href=\"https://thundervalleyresort.com/casino/table-games/blackjack\" target=\"_blank\" rel=\"noreferrer\">Blackjack page</a> and <a href=\"https://www.thundervalleyresort.com/getmedia/blackjack-how-to-play-pdf\" target=\"_blank\" rel=\"noreferrer\">How To Play PDF</a>. The 1-5 opening hand option and the “any 21 pays 3:2” behavior are custom practice rules for this trainer.",
     },
     common: {
       hidden: "Hidden",
-      waiting: "Waiting for the deal",
-      hand: "Hand",
-      down: "DOWN",
-      push: "Push",
       dealerTotalUnknown: "Total: ?",
       dealerUpcard: "Upcard: {total}",
       dealerTotal: "Total: {total}",
       countDecksRemaining: "About {decks} decks remain.",
       countShuffleNext: "The cut card has been reached. The next round will use a new shoe.",
       cutCardLabel: "cut card: {count} cards",
-      shoeStatusFresh: "Fresh shoe, count reset.",
       noLogs: "No table log entries yet.",
-      noShortcuts: "No hotkeys configured.",
-      inactiveHandStatus: "In progress",
-      awaitingSecondCard: "Waiting for second card",
-      softSuffix: " (soft)",
       handNumber: "Hand {index}",
-      logShoeNumber: "Shoe {shoe}",
-      roundNumber: "Round {round}",
-      handOrdinal: "Hand {hand}",
-      cardsDealtPlaceholder: "Cards",
-      roundCancelled: "The current round was cancelled",
-      and: "and",
+      statusPrefix: "State: {state}",
+      totalPrefix: "Total: {total}{soft}",
+      softSuffix: " (soft)",
+      waitingSecondCard: "Waiting for second card",
+      inProgress: "In progress",
+      waitingDeal: "Waiting for the deal",
+      waitingBet: "Ready",
+      push: "Push",
+      seatSelected: "Opening seat on",
+      seatInactive: "Seat idle",
+      spotPlaceholder: "Cards",
       autoShuffleNote: ". The next round will auto-shuffle.",
       noAutoShuffleNote: ".",
     },
     status: {
-      adjustBet: "Set your bet, then press Deal to begin.",
       ready: "The trainer is ready and a fresh shoe has been shuffled.",
-      bankrollLow: "Your bankroll is too small for that bet. Lower the wager first.",
-      autoNewShoe: "The cut card has been reached, so the next shoe is now in play.",
+      adjustBet: "Set the bet and opening hands, then press Deal to begin.",
+      bankrollLow: "Your bankroll does not cover the total table action for this round. Lower the bet or open fewer hands.",
+      autoNewShoe: "The cut card was reached, so a new shoe is now in play.",
       manualNewShoeActive: "The current round was cancelled and a new shoe was loaded.",
       manualNewShoeIdle: "A new shoe was loaded.",
       currentHandTurn: "Hand {hand} is active.",
       currentHandContinue: "Hand {hand} can keep acting.",
       dealerBlackjack: "The dealer has blackjack.",
-      playerBlackjack: "You opened with blackjack.",
+      openingTwentyOne: "One or more opening hands made 21 and auto-stood for settlement.",
       dealerSkips: "All of your hands busted, so the dealer does not draw.",
       dealerDone: "The dealer has finished acting.",
       roundSummary: "{reason} Round result: {wins} win, {losses} loss, {pushes} push{shuffleNote}",
     },
     logs: {
       shoeReady: "Shoe {shoe} was shuffled and the running count reset.",
-      roundStart: "Round {round} started with a bet of {bet}.",
+      roundStart: "Round {round} started with {spots} opening hands at {bet} each.",
       handBust: "Hand {hand} busted.",
       handAutoStand21: "Hand {hand} reached 21 and auto-stood.",
       handStand: "Hand {hand} stood.",
@@ -374,15 +374,15 @@ const LANGUAGES = {
       shoeEmpty: "The shoe ran out of cards and was automatically reshuffled.",
       cancelledRefund: "The round was cancelled and {refund} was returned to the bankroll.",
     },
-    handResult: {
+    results: {
       bust: "Bust",
-      autoStand21: "21 auto-stand",
+      auto21: "21 auto-stand",
       stand: "Stand",
       doubleBust: "Busted after doubling",
       doubleDone: "Double complete",
       splitAcesAuto: "Split aces auto-stand",
       win: "Won {amount}",
-      blackjackWin: "Blackjack won {amount}",
+      twentyOneWin: "21 bonus won {amount}",
       push: "Push",
       dealerBlackjack: "Dealer blackjack",
       lose: "Lost",
@@ -391,21 +391,11 @@ const LANGUAGES = {
       split: "Split",
       splitAces: "Split Aces",
       doubled: "Double",
-      blackjack: "Blackjack",
+      active: "Active",
+      blackjackStyle21: "21 pays 3:2",
       bust: "Bust",
       push: "Push",
       win: "Win",
-    },
-    playerSummary: {
-      waiting: "Waiting for the deal",
-      active: "{count} hands, {indexLabel} is active",
-      settled: "{count} hands",
-    },
-    handMeta: {
-      total: "Total: {total}{soft}",
-      state: "State: {state}",
-      waiting: "Your cards, bet size, and result will appear here after the deal.",
-      waitingBet: "Waiting for bet",
     },
   },
 };
@@ -416,35 +406,48 @@ const dom = {
   heroText: document.querySelector("#hero-text"),
   financeHeading: document.querySelector("#finance-heading"),
   tableLimitPill: document.querySelector("#table-limit-pill"),
+  wagerHeading: document.querySelector("#wager-heading"),
+  betModePill: document.querySelector("#bet-mode-pill"),
+  openingHandsHeading: document.querySelector("#opening-hands-heading"),
+  openingHandsPill: document.querySelector("#opening-hands-pill"),
+  countHeading: document.querySelector("#count-heading"),
+  countPill: document.querySelector("#count-pill"),
+  rulesHeading: document.querySelector("#rules-heading"),
+  rulesPill: document.querySelector("#rules-pill"),
+  shortcutsHeading: document.querySelector("#shortcuts-heading"),
+  shortcutsPill: document.querySelector("#shortcuts-pill"),
+  logHeading: document.querySelector("#log-heading"),
+  logPill: document.querySelector("#log-pill"),
+  sourcesHeading: document.querySelector("#sources-heading"),
+  sourcesPill: document.querySelector("#sources-pill"),
+  sourcesText: document.querySelector("#sources-text"),
   bankrollLabel: document.querySelector("#bankroll-label"),
   betStatLabel: document.querySelector("#bet-stat-label"),
   roundStatLabel: document.querySelector("#round-stat-label"),
   shoeStatLabel: document.querySelector("#shoe-stat-label"),
   betInputLabel: document.querySelector("#bet-input-label"),
-  rulesHeading: document.querySelector("#rules-heading"),
-  rulesPill: document.querySelector("#rules-pill"),
-  ruleList: document.querySelector("#rule-list"),
-  dealerSeatLabel: document.querySelector("#dealer-seat-label"),
-  dealerHeading: document.querySelector("#dealer-heading"),
-  dealerTotal: document.querySelector("#dealer-total"),
-  dealerCards: document.querySelector("#dealer-cards"),
-  controls: document.querySelector("#controls"),
-  tableStatus: document.querySelector("#table-status"),
-  dealButton: document.querySelector("#deal-btn"),
-  hitButton: document.querySelector("#hit-btn"),
-  standButton: document.querySelector("#stand-btn"),
-  doubleButton: document.querySelector("#double-btn"),
-  splitButton: document.querySelector("#split-btn"),
-  playerSeatLabel: document.querySelector("#player-seat-label"),
-  playerHeading: document.querySelector("#player-heading"),
-  playerSummary: document.querySelector("#player-summary"),
-  playerHands: document.querySelector("#player-hands"),
-  countHeading: document.querySelector("#count-heading"),
-  countPill: document.querySelector("#count-pill"),
+  openingBetLabel: document.querySelector("#opening-bet-label"),
+  tableExposureLabel: document.querySelector("#table-exposure-label"),
   runningCountLabel: document.querySelector("#running-count-label"),
   trueCountLabel: document.querySelector("#true-count-label"),
   cardsLeftLabel: document.querySelector("#cards-left-label"),
   cardsSeenLabel: document.querySelector("#cards-seen-label"),
+  dealerSeatLabel: document.querySelector("#dealer-seat-label"),
+  dealerHeading: document.querySelector("#dealer-heading"),
+  dealerTotal: document.querySelector("#dealer-total"),
+  dealerCards: document.querySelector("#dealer-cards"),
+  tableBanner: document.querySelector("#table-banner"),
+  tableSubbanner: document.querySelector("#table-subbanner"),
+  tableFootnote: document.querySelector("#table-footnote"),
+  playerSpots: document.querySelector("#player-spots"),
+  tableStatus: document.querySelector("#table-status"),
+  bankrollValue: document.querySelector("#bankroll-value"),
+  betValue: document.querySelector("#bet-value"),
+  roundValue: document.querySelector("#round-value"),
+  shoeValue: document.querySelector("#shoe-value"),
+  openingBetValue: document.querySelector("#opening-bet-value"),
+  tableExposureValue: document.querySelector("#table-exposure-value"),
+  betInput: document.querySelector("#bet-input"),
   runningCount: document.querySelector("#running-count"),
   trueCount: document.querySelector("#true-count"),
   cardsLeft: document.querySelector("#cards-left"),
@@ -453,37 +456,35 @@ const dom = {
   shoeStatus: document.querySelector("#shoe-status"),
   shuffleFlag: document.querySelector("#shuffle-flag"),
   cutMarker: document.querySelector("#cut-marker"),
-  shortcutsHeading: document.querySelector("#shortcuts-heading"),
-  shortcutsPill: document.querySelector("#shortcuts-pill"),
-  shortcutList: document.querySelector("#shortcut-list"),
-  logHeading: document.querySelector("#log-heading"),
-  logPill: document.querySelector("#log-pill"),
-  logList: document.querySelector("#log-list"),
-  sourcesHeading: document.querySelector("#sources-heading"),
-  sourcesPill: document.querySelector("#sources-pill"),
-  sourcesText: document.querySelector("#sources-text"),
-  bankrollValue: document.querySelector("#bankroll-value"),
-  betValue: document.querySelector("#bet-value"),
-  betInput: document.querySelector("#bet-input"),
-  roundValue: document.querySelector("#round-value"),
-  shoeValue: document.querySelector("#shoe-value"),
+  controls: document.querySelector("#controls"),
+  dealButton: document.querySelector("#deal-btn"),
+  hitButton: document.querySelector("#hit-btn"),
+  standButton: document.querySelector("#stand-btn"),
+  doubleButton: document.querySelector("#double-btn"),
+  splitButton: document.querySelector("#split-btn"),
   newShoeButton: document.querySelector("#new-shoe-btn"),
   toggleCountButton: document.querySelector("#toggle-count-btn"),
+  ruleList: document.querySelector("#rule-list"),
+  shortcutList: document.querySelector("#shortcut-list"),
+  logList: document.querySelector("#log-list"),
   chipRow: document.querySelector("#chip-row"),
   chipButtons: [...document.querySelectorAll(".chip-button")],
   langButtons: [...document.querySelectorAll(".lang-button")],
+  handSelector: document.querySelector("#opening-hand-selector"),
+  handSelectorButtons: [...document.querySelectorAll(".selector-button")],
 };
 
 const state = {
   bankroll: STARTING_BANKROLL,
   currentBet: MIN_BET,
+  openingHands: loadStoredOpeningHands(),
   roundNumber: 0,
   shoeNumber: 0,
   runningCount: 0,
   visibleCardsSeen: 0,
   countVisible: false,
   shufflePending: false,
-  message: textKey("status.adjustBet"),
+  message: desc("status.adjustBet"),
   shoe: [],
   round: null,
   log: [],
@@ -493,7 +494,7 @@ const state = {
 
 function init() {
   bindEvents();
-  buildNewShoe(textKey("status.ready"));
+  buildNewShoe(desc("status.ready"));
   render();
 }
 
@@ -508,15 +509,15 @@ function bindEvents() {
   dom.toggleCountButton.addEventListener("click", toggleCount);
 
   dom.chipButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      setBetValue(Number(button.dataset.bet));
-    });
+    button.addEventListener("click", () => setBetValue(Number(button.dataset.bet)));
   });
 
   dom.langButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      switchLanguage(button.dataset.lang);
-    });
+    button.addEventListener("click", () => switchLanguage(button.dataset.lang));
+  });
+
+  dom.handSelectorButtons.forEach((button) => {
+    button.addEventListener("click", () => setOpeningHands(Number(button.dataset.hands)));
   });
 
   document.addEventListener("keydown", onKeydown);
@@ -549,7 +550,7 @@ function onKeydown(event) {
 }
 
 function switchLanguage(nextLanguage) {
-  if (!LANGUAGES[nextLanguage] || state.language === nextLanguage) {
+  if (!COPY[nextLanguage] || state.language === nextLanguage) {
     return;
   }
 
@@ -558,23 +559,30 @@ function switchLanguage(nextLanguage) {
   render();
 }
 
+function setOpeningHands(count) {
+  const normalized = clamp(count, 1, MAX_TOTAL_HANDS);
+  state.openingHands = normalized;
+  storeOpeningHands(normalized);
+  render();
+}
+
 function onManualNewShoe() {
   const hadActiveRound = isRoundActive();
   if (hadActiveRound) {
     refundCancelledRound();
   }
-  buildNewShoe(hadActiveRound ? textKey("status.manualNewShoeActive") : textKey("status.manualNewShoeIdle"));
+  buildNewShoe(hadActiveRound ? desc("status.manualNewShoeActive") : desc("status.manualNewShoeIdle"));
 }
 
-function buildNewShoe(messageDescriptor) {
+function buildNewShoe(message) {
   state.shoe = shuffle(createShoe());
   state.runningCount = 0;
   state.visibleCardsSeen = 0;
   state.shufflePending = false;
   state.round = null;
   state.shoeNumber += 1;
-  state.message = messageDescriptor;
-  addLog(textKey("logs.shoeReady", { shoe: state.shoeNumber }));
+  state.message = message;
+  addLog(desc("logs.shoeReady", { shoe: state.shoeNumber }));
 }
 
 function createShoe() {
@@ -588,7 +596,6 @@ function createShoe() {
           id: `${deckIndex + 1}-${cardId}`,
           rank,
           suit: suit.code,
-          suitName: suit.name,
           red: suit.red,
         });
         cardId += 1;
@@ -633,46 +640,55 @@ function startRound() {
     return;
   }
 
-  if (state.bankroll < state.currentBet) {
-    state.message = textKey("status.bankrollLow");
+  const totalAction = getOpeningExposure();
+  if (state.bankroll < totalAction) {
+    state.message = desc("status.bankrollLow");
     render();
     return;
   }
 
   if (state.shufflePending || state.shoe.length <= CUT_CARD_REMAINING) {
-    buildNewShoe(textKey("status.autoNewShoe"));
+    buildNewShoe(desc("status.autoNewShoe"));
   }
 
   state.roundNumber += 1;
-  state.bankroll -= state.currentBet;
+  state.bankroll -= totalAction;
 
-  const openingHand = createHand({
-    bet: state.currentBet,
-    cards: [],
-    fromSplit: false,
-    isSplitAceHand: false,
-    pendingDeal: false,
-  });
+  const hands = Array.from({ length: state.openingHands }, (_, index) =>
+    createHand({
+      bet: state.currentBet,
+      cards: [],
+      fromSplit: false,
+      isSplitAceHand: false,
+      pendingDeal: false,
+      openingSpot: index + 1,
+    }),
+  );
 
   state.round = {
     phase: "dealing",
     dealer: { cards: [] },
-    hands: [openingHand],
+    hands,
     activeHandIndex: 0,
     acesSplitUsed: false,
   };
 
-  dealVisibleCard(openingHand);
+  hands.forEach((hand) => dealVisibleCard(hand));
   dealVisibleCard(state.round.dealer);
-  dealVisibleCard(openingHand);
+  hands.forEach((hand) => dealVisibleCard(hand));
   dealHiddenCard(state.round.dealer);
 
-  addLog(textKey("logs.roundStart", { round: state.roundNumber, bet: formatMoney(state.currentBet) }));
+  addLog(desc("logs.roundStart", {
+    round: state.roundNumber,
+    spots: state.openingHands,
+    bet: formatMoney(state.currentBet),
+  }));
+
   afterInitialDeal();
   render();
 }
 
-function createHand({ bet, cards, fromSplit, isSplitAceHand, pendingDeal }) {
+function createHand({ bet, cards, fromSplit, isSplitAceHand, pendingDeal, openingSpot }) {
   return {
     id: state.nextHandId++,
     bet,
@@ -685,6 +701,7 @@ function createHand({ bet, cards, fromSplit, isSplitAceHand, pendingDeal }) {
     busted: false,
     doubled: false,
     result: null,
+    openingSpot,
   };
 }
 
@@ -708,7 +725,7 @@ function drawCard() {
     state.shoe = shuffle(createShoe());
     state.runningCount = 0;
     state.visibleCardsSeen = 0;
-    addLog(textKey("logs.shoeEmpty"));
+    addLog(desc("logs.shoeEmpty"));
   }
 
   return { ...state.shoe.pop(), faceDown: false, exposed: false };
@@ -726,19 +743,26 @@ function exposeCard(card) {
 }
 
 function afterInitialDeal() {
-  const dealerHasNatural = hasBlackjack(state.round.dealer.cards, false);
-  const playerHasNatural = hasBlackjack(state.round.hands[0].cards, false);
-
-  if (dealerHasNatural) {
+  const dealerHasBlackjack = hasBlackjack(state.round.dealer.cards, false);
+  if (dealerHasBlackjack) {
     revealDealerHoleCard();
-    finishRound(textKey("status.dealerBlackjack"));
+    finishRound(desc("status.dealerBlackjack"));
     return;
   }
 
-  if (playerHasNatural) {
-    revealDealerHoleCard();
-    finishRound(textKey("status.playerBlackjack"));
-    return;
+  let openedWithTwentyOne = false;
+  state.round.hands.forEach((hand, index) => {
+    if (getHandValue(hand.cards).total === 21) {
+      hand.stood = true;
+      hand.resolved = true;
+      hand.result = desc("results.auto21");
+      addLog(desc("logs.handAutoStand21", { hand: index + 1 }));
+      openedWithTwentyOne = true;
+    }
+  });
+
+  if (openedWithTwentyOne) {
+    state.message = desc("status.openingTwentyOne");
   }
 
   state.round.phase = "player-turn";
@@ -757,8 +781,8 @@ function hitHand() {
   if (total > 21) {
     hand.busted = true;
     hand.resolved = true;
-    hand.result = textKey("handResult.bust");
-    addLog(textKey("logs.handBust", { hand: state.round.activeHandIndex + 1 }));
+    hand.result = desc("results.bust");
+    addLog(desc("logs.handBust", { hand: state.round.activeHandIndex + 1 }));
     focusNextPlayableHand(state.round.activeHandIndex + 1);
     return;
   }
@@ -766,15 +790,13 @@ function hitHand() {
   if (total === 21) {
     hand.stood = true;
     hand.resolved = true;
-    hand.result = textKey("handResult.autoStand21");
-    addLog(textKey("logs.handAutoStand21", { hand: state.round.activeHandIndex + 1 }));
+    hand.result = desc("results.auto21");
+    addLog(desc("logs.handAutoStand21", { hand: state.round.activeHandIndex + 1 }));
     focusNextPlayableHand(state.round.activeHandIndex + 1);
     return;
   }
 
-  state.message = textKey("status.currentHandContinue", {
-    hand: state.round.activeHandIndex + 1,
-  });
+  state.message = desc("status.currentHandContinue", { hand: state.round.activeHandIndex + 1 });
   render();
 }
 
@@ -786,8 +808,8 @@ function standHand() {
 
   hand.stood = true;
   hand.resolved = true;
-  hand.result = textKey("handResult.stand");
-  addLog(textKey("logs.handStand", { hand: state.round.activeHandIndex + 1 }));
+  hand.result = desc("results.stand");
+  addLog(desc("logs.handStand", { hand: state.round.activeHandIndex + 1 }));
   focusNextPlayableHand(state.round.activeHandIndex + 1);
 }
 
@@ -806,12 +828,13 @@ function doubleHand() {
   hand.resolved = true;
   hand.stood = total <= 21;
   hand.busted = total > 21;
-  hand.result = total > 21 ? textKey("handResult.doubleBust") : textKey("handResult.doubleDone");
+  hand.result = total > 21 ? desc("results.doubleBust") : desc("results.doubleDone");
 
-  addLog(textKey("logs.handDouble", {
+  addLog(desc("logs.handDouble", {
     hand: state.round.activeHandIndex + 1,
     bet: formatMoney(hand.bet),
   }));
+
   focusNextPlayableHand(state.round.activeHandIndex + 1);
 }
 
@@ -833,6 +856,7 @@ function splitHand() {
     fromSplit: true,
     isSplitAceHand: splittingAces,
     pendingDeal: false,
+    openingSpot: hand.openingSpot,
   });
   const secondHand = createHand({
     bet: hand.bet,
@@ -840,6 +864,7 @@ function splitHand() {
     fromSplit: true,
     isSplitAceHand: splittingAces,
     pendingDeal: !splittingAces,
+    openingSpot: hand.openingSpot,
   });
 
   round.hands.splice(round.activeHandIndex, 1, firstHand, secondHand);
@@ -850,38 +875,37 @@ function splitHand() {
     dealVisibleCard(secondHand);
     firstHand.stood = true;
     firstHand.resolved = true;
-    firstHand.result = textKey("handResult.splitAcesAuto");
+    firstHand.result = desc("results.splitAcesAuto");
     secondHand.stood = true;
     secondHand.resolved = true;
-    secondHand.result = textKey("handResult.splitAcesAuto");
-    addLog(textKey("logs.splitAces"));
+    secondHand.result = desc("results.splitAcesAuto");
+    addLog(desc("logs.splitAces"));
     focusNextPlayableHand(round.activeHandIndex);
     return;
   }
 
   dealVisibleCard(firstHand);
-  addLog(textKey("logs.splitDone", { hand: round.activeHandIndex + 1 }));
+  addLog(desc("logs.splitDone", { hand: round.activeHandIndex + 1 }));
 
   const { total } = getHandValue(firstHand.cards);
-  if (total === 21) {
-    firstHand.stood = true;
-    firstHand.resolved = true;
-    firstHand.result = textKey("handResult.autoStand21");
-    focusNextPlayableHand(round.activeHandIndex + 1);
-    return;
-  }
-
   if (total > 21) {
     firstHand.busted = true;
     firstHand.resolved = true;
-    firstHand.result = textKey("handResult.bust");
+    firstHand.result = desc("results.bust");
     focusNextPlayableHand(round.activeHandIndex + 1);
     return;
   }
 
-  state.message = textKey("status.currentHandContinue", {
-    hand: round.activeHandIndex + 1,
-  });
+  if (total === 21) {
+    firstHand.stood = true;
+    firstHand.resolved = true;
+    firstHand.result = desc("results.auto21");
+    addLog(desc("logs.handAutoStand21", { hand: round.activeHandIndex + 1 }));
+    focusNextPlayableHand(round.activeHandIndex + 1);
+    return;
+  }
+
+  state.message = desc("status.currentHandContinue", { hand: round.activeHandIndex + 1 });
   render();
 }
 
@@ -895,25 +919,24 @@ function focusNextPlayableHand(startIndex) {
     if (hand.pendingDeal) {
       hand.pendingDeal = false;
       dealVisibleCard(hand);
-      addLog(textKey("logs.secondCardDealt", { hand: index + 1 }));
+      addLog(desc("logs.secondCardDealt", { hand: index + 1 }));
 
       const { total } = getHandValue(hand.cards);
       if (total > 21) {
         hand.busted = true;
         hand.resolved = true;
-        hand.result = textKey("handResult.bust");
+        hand.result = desc("results.bust");
       } else if (total === 21) {
         hand.stood = true;
         hand.resolved = true;
-        hand.result = textKey("handResult.autoStand21");
+        hand.result = desc("results.auto21");
+        addLog(desc("logs.handAutoStand21", { hand: index + 1 }));
       }
     }
 
     if (!hand.resolved) {
       round.phase = "player-turn";
-      state.message = textKey("status.currentHandTurn", {
-        hand: index + 1,
-      });
+      state.message = desc("status.currentHandTurn", { hand: index + 1 });
       render();
       return;
     }
@@ -927,7 +950,7 @@ function playDealerTurn() {
   revealDealerHoleCard();
 
   if (state.round.hands.every((hand) => hand.busted)) {
-    finishRound(textKey("status.dealerSkips"));
+    finishRound(desc("status.dealerSkips"));
     return;
   }
 
@@ -935,7 +958,7 @@ function playDealerTurn() {
     dealVisibleCard(state.round.dealer);
   }
 
-  finishRound(textKey("status.dealerDone"));
+  finishRound(desc("status.dealerDone"));
 }
 
 function revealDealerHoleCard() {
@@ -950,7 +973,7 @@ function dealerShouldHit() {
   return total < 17 || (total === 17 && soft);
 }
 
-function finishRound(reasonDescriptor) {
+function finishRound(reason) {
   const round = state.round;
   const dealerValue = getHandValue(round.dealer.cards);
   const dealerBlackjack = hasBlackjack(round.dealer.cards, false);
@@ -962,61 +985,59 @@ function finishRound(reasonDescriptor) {
 
   round.hands.forEach((hand) => {
     const handValue = getHandValue(hand.cards);
-    const natural = hasBlackjack(hand.cards, hand.fromSplit);
+    const playerBlackjack = hasBlackjack(hand.cards, hand.fromSplit);
 
     if (hand.busted) {
-      hand.result = hand.result || textKey("handResult.bust");
+      hand.result = hand.result || desc("results.bust");
       losses += 1;
       return;
     }
 
     if (dealerBlackjack) {
-      if (natural) {
+      if (playerBlackjack) {
         state.bankroll += hand.bet;
-        hand.result = textKey("handResult.push");
+        hand.result = desc("results.push");
         pushes += 1;
       } else {
-        hand.result = textKey("handResult.dealerBlackjack");
+        hand.result = desc("results.dealerBlackjack");
         losses += 1;
       }
       return;
     }
 
-    if (natural) {
-      state.bankroll += hand.bet * 2.5;
-      hand.result = textKey("handResult.blackjackWin", { amount: formatMoney(hand.bet * 1.5) });
-      wins += 1;
-      return;
-    }
-
     if (dealerBust || handValue.total > dealerValue.total) {
-      state.bankroll += hand.bet * 2;
-      hand.result = textKey("handResult.win", { amount: formatMoney(hand.bet) });
+      if (handValue.total === 21) {
+        state.bankroll += hand.bet * 2.5;
+        hand.result = desc("results.twentyOneWin", { amount: formatMoney(hand.bet * 1.5) });
+      } else {
+        state.bankroll += hand.bet * 2;
+        hand.result = desc("results.win", { amount: formatMoney(hand.bet) });
+      }
       wins += 1;
       return;
     }
 
     if (handValue.total === dealerValue.total) {
       state.bankroll += hand.bet;
-      hand.result = textKey("handResult.push");
+      hand.result = desc("results.push");
       pushes += 1;
       return;
     }
 
-    hand.result = hand.result || textKey("handResult.lose");
+    hand.result = hand.result || desc("results.lose");
     losses += 1;
   });
 
   round.phase = "round-over";
   state.shufflePending = state.shoe.length <= CUT_CARD_REMAINING;
-  state.message = textKey("status.roundSummary", {
-    reason: reasonDescriptor,
+  state.message = desc("status.roundSummary", {
+    reason,
     wins,
     losses,
     pushes,
-    shuffleNote: textKey(state.shufflePending ? "common.autoShuffleNote" : "common.noAutoShuffleNote"),
+    shuffleNote: desc(state.shufflePending ? "common.autoShuffleNote" : "common.noAutoShuffleNote"),
   });
-  addLog(textKey("logs.roundEnd", { wins, losses, pushes }));
+  addLog(desc("logs.roundEnd", { wins, losses, pushes }));
   render();
 }
 
@@ -1024,7 +1045,6 @@ function getActiveHand() {
   if (!state.round) {
     return null;
   }
-
   return state.round.hands[state.round.activeHandIndex] || null;
 }
 
@@ -1063,15 +1083,12 @@ function canSplit(hand) {
     return false;
   }
 
-  if (hand.cards.length !== 2 || state.round.hands.length >= MAX_PLAYER_HANDS || state.bankroll < hand.bet) {
+  if (hand.cards.length !== 2 || state.round.hands.length >= MAX_TOTAL_HANDS || state.bankroll < hand.bet) {
     return false;
   }
 
   const [first, second] = hand.cards;
-  const keyA = splitRankKey(first.rank);
-  const keyB = splitRankKey(second.rank);
-
-  if (keyA !== keyB) {
+  if (splitRankKey(first.rank) !== splitRankKey(second.rank)) {
     return false;
   }
 
@@ -1114,19 +1131,17 @@ function hasBlackjack(cards, fromSplit) {
 
 function getVisibleDealerValueLabel() {
   if (!state.round) {
-    return tr("common.dealerTotalUnknown");
+    return t("common.dealerTotalUnknown");
   }
 
   const dealerCards = state.round.dealer.cards;
   const hidden = dealerCards.some((card) => card.faceDown);
-
   if (hidden) {
-    const visibleCards = dealerCards.filter((card) => !card.faceDown);
-    const visibleValue = getHandValue(visibleCards).total;
-    return tr("common.dealerUpcard", { total: visibleValue });
+    const visibleValue = getHandValue(dealerCards.filter((card) => !card.faceDown)).total;
+    return t("common.dealerUpcard", { total: visibleValue });
   }
 
-  return tr("common.dealerTotal", { total: getHandValue(dealerCards).total });
+  return t("common.dealerTotal", { total: getHandValue(dealerCards).total });
 }
 
 function getTrueCount() {
@@ -1146,7 +1161,7 @@ function refundCancelledRound() {
 
   const refund = state.round.hands.reduce((sum, hand) => sum + hand.bet, 0);
   state.bankroll += refund;
-  addLog(textKey("logs.cancelledRefund", { refund: formatMoney(refund) }));
+  addLog(desc("logs.cancelledRefund", { refund: formatMoney(refund) }));
 }
 
 function addLog(entry) {
@@ -1156,69 +1171,75 @@ function addLog(entry) {
 
 function render() {
   renderStaticText();
+  renderLanguageState();
   renderHeaderStats();
   renderDealer();
-  renderPlayerHands();
+  renderPlayerSpots();
   renderCountPanel();
   renderLog();
   renderControls();
-  renderLanguageState();
+  renderOpeningHandsSelector();
 }
 
 function renderStaticText() {
-  document.title = tr("meta.title");
-  document.documentElement.lang = tr("meta.htmlLang");
+  document.title = t("meta.title");
+  document.documentElement.lang = t("meta.htmlLang");
 
-  dom.heroEyebrow.textContent = tr("hero.eyebrow");
-  dom.heroTitle.textContent = tr("hero.title");
-  dom.heroText.textContent = tr("hero.text");
+  dom.heroEyebrow.textContent = t("hero.eyebrow");
+  dom.heroTitle.textContent = t("hero.title");
+  dom.heroText.textContent = t("hero.text");
 
-  dom.financeHeading.textContent = tr("sections.finance");
-  dom.tableLimitPill.textContent = tr("pills.tableLimit");
-  dom.bankrollLabel.textContent = tr("stats.bankroll");
-  dom.betStatLabel.textContent = tr("stats.bet");
-  dom.roundStatLabel.textContent = tr("stats.round");
-  dom.shoeStatLabel.textContent = tr("stats.shoe");
-  dom.betInputLabel.textContent = tr("stats.betInput");
+  dom.financeHeading.textContent = t("sections.finance");
+  dom.tableLimitPill.textContent = t("pills.tableLimit");
+  dom.wagerHeading.textContent = t("sections.wager");
+  dom.betModePill.textContent = t("pills.wager");
+  dom.openingHandsHeading.textContent = t("sections.openingHands");
+  dom.openingHandsPill.textContent = t("pills.openingHands");
+  dom.countHeading.textContent = t("sections.count");
+  dom.countPill.textContent = t("pills.count");
+  dom.rulesHeading.textContent = t("sections.rules");
+  dom.rulesPill.textContent = t("pills.rules");
+  dom.shortcutsHeading.textContent = t("sections.shortcuts");
+  dom.shortcutsPill.textContent = t("pills.shortcuts");
+  dom.logHeading.textContent = t("sections.logs");
+  dom.logPill.textContent = t("pills.logs");
+  dom.sourcesHeading.textContent = t("sections.sources");
+  dom.sourcesPill.textContent = t("pills.sources");
+  dom.sourcesText.innerHTML = t("sources.bodyHtml");
 
-  dom.rulesHeading.textContent = tr("sections.rules");
-  dom.rulesPill.textContent = tr("pills.rules");
+  dom.bankrollLabel.textContent = t("stats.bankroll");
+  dom.betStatLabel.textContent = t("stats.bet");
+  dom.roundStatLabel.textContent = t("stats.round");
+  dom.shoeStatLabel.textContent = t("stats.shoe");
+  dom.betInputLabel.textContent = t("stats.betInput");
+  dom.openingBetLabel.textContent = t("stats.openingBet");
+  dom.tableExposureLabel.textContent = t("stats.tableExposure");
+  dom.runningCountLabel.textContent = t("stats.runningCount");
+  dom.trueCountLabel.textContent = t("stats.trueCount");
+  dom.cardsLeftLabel.textContent = t("stats.cardsLeft");
+  dom.cardsSeenLabel.textContent = t("stats.cardsSeen");
 
-  dom.dealerSeatLabel.textContent = tr("zoneLabels.dealer");
-  dom.dealerHeading.textContent = tr("sections.dealer");
-  dom.playerSeatLabel.textContent = tr("zoneLabels.player");
-  dom.playerHeading.textContent = tr("sections.player");
+  dom.dealerSeatLabel.textContent = "Dealer";
+  dom.dealerHeading.textContent = t("sections.dealer");
 
-  dom.countHeading.textContent = tr("sections.count");
-  dom.countPill.textContent = tr("pills.count");
-  dom.runningCountLabel.textContent = tr("stats.runningCount");
-  dom.trueCountLabel.textContent = tr("stats.trueCount");
-  dom.cardsLeftLabel.textContent = tr("stats.cardsLeft");
-  dom.cardsSeenLabel.textContent = tr("stats.cardsSeen");
+  dom.tableBanner.textContent = t("table.banner");
+  dom.tableSubbanner.textContent = t("table.subbanner");
+  dom.tableFootnote.textContent = t("table.footnote");
 
-  dom.shortcutsHeading.textContent = tr("sections.shortcuts");
-  dom.shortcutsPill.textContent = tr("pills.shortcuts");
-  dom.logHeading.textContent = tr("sections.logs");
-  dom.logPill.textContent = tr("pills.logs");
-  dom.sourcesHeading.textContent = tr("sections.sources");
-  dom.sourcesPill.textContent = tr("pills.sources");
-  dom.sourcesText.innerHTML = tr("sources.bodyHtml");
+  dom.newShoeButton.textContent = t("buttons.newShoe");
+  dom.toggleCountButton.textContent = state.countVisible ? t("buttons.hideCount") : t("buttons.showCount");
+  dom.dealButton.textContent = t("buttons.deal");
+  dom.hitButton.textContent = t("buttons.hit");
+  dom.standButton.textContent = t("buttons.stand");
+  dom.doubleButton.textContent = t("buttons.double");
+  dom.splitButton.textContent = t("buttons.split");
 
-  dom.newShoeButton.textContent = tr("buttons.newShoe");
-  dom.toggleCountButton.textContent = state.countVisible ? tr("buttons.hideCount") : tr("buttons.showCount");
-  dom.dealButton.textContent = tr("buttons.deal");
-  dom.hitButton.textContent = tr("buttons.hit");
-  dom.standButton.textContent = tr("buttons.stand");
-  dom.doubleButton.textContent = tr("buttons.double");
-  dom.splitButton.textContent = tr("buttons.split");
-
-  dom.chipRow.setAttribute("aria-label", tr("accessibility.quickBets"));
-  dom.controls.setAttribute("aria-label", tr("accessibility.roundControls"));
-  dom.cutMarker.setAttribute("title", tr("accessibility.cutMarker"));
-  dom.cutMarker.setAttribute("aria-label", tr("accessibility.cutMarker"));
-  dom.langButtons.forEach((button) => {
-    button.setAttribute("aria-label", tr("accessibility.languageSwitch"));
-  });
+  dom.chipRow.setAttribute("aria-label", t("accessibility.quickBets"));
+  dom.controls.setAttribute("aria-label", t("accessibility.roundControls"));
+  dom.handSelector.setAttribute("aria-label", t("accessibility.openingHandsSelector"));
+  dom.cutMarker.setAttribute("title", t("accessibility.cutMarker"));
+  dom.cutMarker.setAttribute("aria-label", t("accessibility.cutMarker"));
+  dom.langButtons.forEach((button) => button.setAttribute("aria-label", t("accessibility.languageSwitch")));
 
   renderRuleList();
   renderShortcutList();
@@ -1226,7 +1247,6 @@ function renderStaticText() {
 
 function renderRuleList() {
   dom.ruleList.replaceChildren();
-
   getCopy("rules.items").forEach((line) => {
     const item = document.createElement("li");
     item.textContent = line;
@@ -1236,14 +1256,25 @@ function renderRuleList() {
 
 function renderShortcutList() {
   dom.shortcutList.replaceChildren();
-
   SHORTCUTS.forEach((shortcut) => {
     const item = document.createElement("li");
-    const key = document.createElement("kbd");
-    key.textContent = shortcut.key;
-    item.appendChild(key);
-    item.append(` ${tr(shortcut.actionKey)}`);
+    const kbd = document.createElement("kbd");
+    kbd.textContent = shortcut.key;
+    item.appendChild(kbd);
+    item.append(` ${t(shortcut.actionKey)}`);
     dom.shortcutList.appendChild(item);
+  });
+}
+
+function renderLanguageState() {
+  dom.langButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.lang === state.language);
+  });
+}
+
+function renderOpeningHandsSelector() {
+  dom.handSelectorButtons.forEach((button) => {
+    button.classList.toggle("active", Number(button.dataset.hands) === state.openingHands);
   });
 }
 
@@ -1252,6 +1283,8 @@ function renderHeaderStats() {
   dom.betValue.textContent = formatMoney(state.currentBet);
   dom.roundValue.textContent = String(state.roundNumber);
   dom.shoeValue.textContent = String(state.shoeNumber);
+  dom.openingBetValue.textContent = formatMoney(state.currentBet);
+  dom.tableExposureValue.textContent = formatMoney(getOpeningExposure());
   dom.betInput.value = String(state.currentBet);
   dom.tableStatus.textContent = resolveText(state.message);
 }
@@ -1261,7 +1294,7 @@ function renderDealer() {
   dom.dealerCards.replaceChildren();
 
   if (!state.round) {
-    dom.dealerCards.appendChild(buildGhostCard(tr("common.waiting")));
+    dom.dealerCards.appendChild(buildGhostCard(t("common.waitingDeal")));
     return;
   }
 
@@ -1270,85 +1303,117 @@ function renderDealer() {
   });
 }
 
-function renderPlayerHands() {
-  dom.playerHands.replaceChildren();
+function renderPlayerSpots() {
+  dom.playerSpots.replaceChildren();
 
-  if (!state.round) {
-    dom.playerSummary.textContent = tr("playerSummary.waiting");
-    dom.playerHands.appendChild(buildEmptyHand());
-    return;
+  for (let slotIndex = 0; slotIndex < MAX_TOTAL_HANDS; slotIndex += 1) {
+    const hand = state.round?.hands[slotIndex] || null;
+    if (hand) {
+      dom.playerSpots.appendChild(buildHandSpot(hand, slotIndex));
+    } else {
+      dom.playerSpots.appendChild(buildEmptySpot(slotIndex));
+    }
+  }
+}
+
+function buildHandSpot(hand, index) {
+  const article = document.createElement("article");
+  const active = state.round?.phase === "player-turn" && index === state.round.activeHandIndex;
+  article.className = `spot${active ? " active" : ""}`;
+
+  const { total, soft } = getHandValue(hand.cards);
+  const statusText = hand.result ? resolveText(hand.result) : hand.pendingDeal ? t("common.waitingSecondCard") : t("common.inProgress");
+  const seatText = t("table.seat", { index: index + 1 });
+
+  article.innerHTML = `
+    <div class="spot-topline">
+      <div>
+        <p class="spot-seat">${seatText}</p>
+        <h3 class="spot-title">${t("common.handNumber", { index: index + 1 })}</h3>
+      </div>
+      <span class="tag info">${formatMoney(hand.bet)}</span>
+    </div>
+    <div class="spot-tags"></div>
+    <div class="card-row"></div>
+    <div class="spot-chipline">
+      <div class="spot-chip">${formatMoney(hand.bet).replace(".00", "")}</div>
+      <div class="spot-meta">
+        ${t("common.totalPrefix", { total, soft: soft && total <= 21 ? t("common.softSuffix") : "" })}<br>
+        ${t("common.statusPrefix", { state: statusText })}
+      </div>
+    </div>
+  `;
+
+  const tagHost = article.querySelector(".spot-tags");
+  const cardHost = article.querySelector(".card-row");
+
+  if (active) {
+    tagHost.appendChild(buildTag(t("tags.active"), "info"));
+  }
+  if (hand.fromSplit) {
+    tagHost.appendChild(buildTag(t("tags.split"), "info"));
+  }
+  if (hand.isSplitAceHand) {
+    tagHost.appendChild(buildTag(t("tags.splitAces"), "info"));
+  }
+  if (hand.doubled) {
+    tagHost.appendChild(buildTag(t("tags.doubled"), "info"));
+  }
+  if (total === 21 && !hand.busted) {
+    tagHost.appendChild(buildTag(t("tags.blackjackStyle21"), "success"));
+  }
+  if (hand.busted) {
+    tagHost.appendChild(buildTag(t("tags.bust"), "danger"));
+  } else if (descriptorKey(hand.result) === "results.push") {
+    tagHost.appendChild(buildTag(t("tags.push"), "info"));
+  } else if (isWinningResult(hand.result)) {
+    tagHost.appendChild(buildTag(t("tags.win"), "success"));
   }
 
-  const activeIndex = state.round.activeHandIndex;
-  dom.playerSummary.textContent = isRoundActive()
-    ? tr("playerSummary.active", {
-      count: state.round.hands.length,
-      index: activeIndex + 1,
-      indexLabel: handLabel(activeIndex + 1),
-    })
-    : tr("playerSummary.settled", { count: state.round.hands.length });
-
-  state.round.hands.forEach((hand, index) => {
-    const panel = document.createElement("article");
-    panel.className = `hand-panel${index === activeIndex && state.round.phase === "player-turn" ? " active" : ""}`;
-
-    const { total, soft } = getHandValue(hand.cards);
-    const statusText = hand.result
-      ? resolveText(hand.result)
-      : hand.pendingDeal
-        ? tr("common.awaitingSecondCard")
-        : tr("common.inactiveHandStatus");
-
-    panel.innerHTML = `
-      <div class="hand-topline">
-        <h3 class="hand-title">${tr("common.handNumber", { index: index + 1 })}</h3>
-        <span class="tag info">${formatMoney(hand.bet)}</span>
-      </div>
-      <div class="hand-tags"></div>
-      <div class="card-row compact"></div>
-      <div class="hand-meta">
-        ${tr("handMeta.total", { total, soft: soft && total <= 21 ? tr("common.softSuffix") : "" })}<br>
-        ${tr("handMeta.state", { state: statusText })}
-      </div>
-    `;
-
-    const tagHost = panel.querySelector(".hand-tags");
-    const cardHost = panel.querySelector(".card-row");
-
-    if (hand.fromSplit) {
-      tagHost.appendChild(buildTag(tr("tags.split"), "info"));
-    }
-    if (hand.isSplitAceHand) {
-      tagHost.appendChild(buildTag(tr("tags.splitAces"), "info"));
-    }
-    if (hand.doubled) {
-      tagHost.appendChild(buildTag(tr("tags.doubled"), "info"));
-    }
-    if (hasBlackjack(hand.cards, hand.fromSplit)) {
-      tagHost.appendChild(buildTag(tr("tags.blackjack"), "success"));
-    } else if (hand.busted) {
-      tagHost.appendChild(buildTag(tr("tags.bust"), "danger"));
-    } else if (descriptorKey(hand.result) === "handResult.push") {
-      tagHost.appendChild(buildTag(tr("tags.push"), "info"));
-    } else if (isWinningResult(hand.result)) {
-      tagHost.appendChild(buildTag(tr("tags.win"), "success"));
-    }
-
-    hand.cards.forEach((card) => {
-      cardHost.appendChild(buildCardNode(card));
-    });
-
-    if (hand.pendingDeal) {
-      cardHost.appendChild(buildGhostCard(tr("common.awaitingSecondCard")));
-    }
-
-    dom.playerHands.appendChild(panel);
+  hand.cards.forEach((card) => {
+    cardHost.appendChild(buildCardNode(card));
   });
+
+  if (hand.pendingDeal) {
+    cardHost.appendChild(buildGhostCard(t("common.waitingSecondCard")));
+  }
+
+  return article;
+}
+
+function buildEmptySpot(index) {
+  const enabledForOpening = !state.round && index < state.openingHands;
+  const article = document.createElement("article");
+  article.className = `spot empty${enabledForOpening ? " active" : ""}`;
+
+  article.innerHTML = `
+    <div class="spot-topline">
+      <div>
+        <p class="spot-seat">${t("table.seat", { index: index + 1 })}</p>
+        <h3 class="spot-title">${enabledForOpening ? t("common.seatSelected") : t("common.seatInactive")}</h3>
+      </div>
+      <span class="tag">${enabledForOpening ? t("table.emptyActive") : t("table.emptyIdle")}</span>
+    </div>
+    <div class="spot-tags"></div>
+    <div class="card-row"></div>
+    <div class="spot-chipline">
+      <div class="spot-chip">${enabledForOpening ? formatMoney(state.currentBet).replace(".00", "") : "--"}</div>
+      <div class="spot-meta">
+        ${t("common.totalPrefix", { total: "--", soft: "" })}<br>
+        ${t("common.statusPrefix", { state: enabledForOpening ? t("common.waitingDeal") : t("common.waitingBet") })}
+      </div>
+    </div>
+  `;
+
+  const cardHost = article.querySelector(".card-row");
+  cardHost.appendChild(buildGhostCard(t("common.spotPlaceholder")));
+  cardHost.appendChild(buildGhostCard(t("common.spotPlaceholder")));
+  return article;
 }
 
 function renderCountPanel() {
-  const runningText = state.countVisible ? formatCount(state.runningCount) : tr("common.hidden");
-  const trueText = state.countVisible ? formatCount(Number(getTrueCount().toFixed(1))) : tr("common.hidden");
+  const runningText = state.countVisible ? formatCount(state.runningCount) : t("common.hidden");
+  const trueText = state.countVisible ? formatCount(Number(getTrueCount().toFixed(1))) : t("common.hidden");
   const cardsDealt = DECK_COUNT * CARDS_PER_DECK - state.shoe.length;
   const shoePercent = ((state.shoe.length / (DECK_COUNT * CARDS_PER_DECK)) * 100).toFixed(1);
 
@@ -1357,12 +1422,10 @@ function renderCountPanel() {
   dom.cardsLeft.textContent = String(state.shoe.length);
   dom.cardsSeen.textContent = String(cardsDealt);
   dom.shoeFill.style.width = `${shoePercent}%`;
-  dom.shoeStatus.textContent = state.shoeNumber === 0
-    ? tr("common.shoeStatusFresh")
-    : state.shufflePending
-      ? tr("common.countShuffleNext")
-      : tr("common.countDecksRemaining", { decks: (state.shoe.length / CARDS_PER_DECK).toFixed(2) });
-  dom.shuffleFlag.textContent = tr("common.cutCardLabel", { count: CUT_CARD_REMAINING });
+  dom.shoeStatus.textContent = state.shufflePending
+    ? t("common.countShuffleNext")
+    : t("common.countDecksRemaining", { decks: (state.shoe.length / CARDS_PER_DECK).toFixed(2) });
+  dom.shuffleFlag.textContent = t("common.cutCardLabel", { count: CUT_CARD_REMAINING });
 }
 
 function renderLog() {
@@ -1370,7 +1433,7 @@ function renderLog() {
 
   if (state.log.length === 0) {
     const item = document.createElement("li");
-    item.textContent = tr("common.noLogs");
+    item.textContent = t("common.noLogs");
     dom.logList.appendChild(item);
     return;
   }
@@ -1384,34 +1447,11 @@ function renderLog() {
 
 function renderControls() {
   const hand = getActiveHand();
-  dom.dealButton.disabled = isRoundActive() || state.bankroll < state.currentBet;
+  dom.dealButton.disabled = isRoundActive() || state.bankroll < getOpeningExposure();
   dom.hitButton.disabled = !canHit(hand);
   dom.standButton.disabled = !canStand(hand);
   dom.doubleButton.disabled = !canDouble(hand);
   dom.splitButton.disabled = !canSplit(hand);
-}
-
-function renderLanguageState() {
-  dom.langButtons.forEach((button) => {
-    button.classList.toggle("active", button.dataset.lang === state.language);
-  });
-}
-
-function buildEmptyHand() {
-  const panel = document.createElement("article");
-  panel.className = "hand-panel";
-  panel.innerHTML = `
-    <div class="hand-topline">
-      <h3 class="hand-title">${tr("common.handNumber", { index: 1 })}</h3>
-      <span class="tag">${tr("handMeta.waitingBet")}</span>
-    </div>
-    <div class="card-row compact"></div>
-    <div class="hand-meta">${tr("handMeta.waiting")}</div>
-  `;
-
-  panel.querySelector(".card-row").appendChild(buildGhostCard(tr("common.cardsDealtPlaceholder")));
-  panel.querySelector(".card-row").appendChild(buildGhostCard(tr("common.cardsDealtPlaceholder")));
-  return panel;
 }
 
 function buildCardNode(card) {
@@ -1422,9 +1462,9 @@ function buildCardNode(card) {
     classes.push("back");
     element.className = classes.join(" ");
     element.innerHTML = `
-      <div class="card-corner">TV<span>${tr("common.down")}</span></div>
+      <div class="card-corner">TV<span>${t("table.down")}</span></div>
       <div class="card-center">21</div>
-      <div class="card-corner">TV<span>${tr("common.down")}</span></div>
+      <div class="card-corner">TV<span>${t("table.down")}</span></div>
     `;
     return element;
   }
@@ -1454,67 +1494,70 @@ function buildGhostCard(label) {
 }
 
 function buildTag(text, kind = "") {
-  const element = document.createElement("span");
-  element.className = `tag${kind ? ` ${kind}` : ""}`;
-  element.textContent = text;
-  return element;
+  const tag = document.createElement("span");
+  tag.className = `tag${kind ? ` ${kind}` : ""}`;
+  tag.textContent = text;
+  return tag;
+}
+
+function getOpeningExposure() {
+  return state.currentBet * state.openingHands;
 }
 
 function formatMoney(amount) {
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
     maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
   });
   return formatter.format(amount);
 }
 
 function formatCount(value) {
-  if (value > 0) {
-    return `+${value}`;
-  }
-  return `${value}`;
+  return value > 0 ? `+${value}` : `${value}`;
 }
 
-function textKey(key, params = {}) {
+function desc(key, params = {}) {
   return { key, params };
 }
 
-function resolveText(entry) {
-  if (entry === null || entry === undefined) {
+function resolveText(value) {
+  if (value === null || value === undefined) {
     return "";
   }
 
-  if (typeof entry === "string") {
-    return entry;
-  }
-
-  if (typeof entry === "object" && typeof entry.key === "string") {
-    return tr(entry.key, entry.params);
-  }
-
-  return String(entry);
-}
-
-function tr(path, params = {}) {
-  const value = getCopy(path);
-  if (typeof value !== "string") {
+  if (typeof value === "string") {
     return value;
   }
 
-  return value.replace(/\{(\w+)\}/g, (_, token) => {
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  if (typeof value === "object" && typeof value.key === "string") {
+    return t(value.key, value.params);
+  }
+
+  return String(value);
+}
+
+function t(path, params = {}) {
+  const template = getCopy(path);
+  if (typeof template !== "string") {
+    return template;
+  }
+
+  return template.replace(/\{(\w+)\}/g, (_, token) => {
     if (!(token in params)) {
       return `{${token}}`;
     }
-
-    const paramValue = params[token];
-    return resolveText(paramValue);
+    return resolveText(params[token]);
   });
 }
 
 function getCopy(path) {
-  const languageRoot = LANGUAGES[state.language];
-  return path.split(".").reduce((current, segment) => current?.[segment], languageRoot);
+  return path.split(".").reduce((current, segment) => current?.[segment], COPY[state.language]);
 }
 
 function descriptorKey(entry) {
@@ -1522,17 +1565,13 @@ function descriptorKey(entry) {
 }
 
 function isWinningResult(entry) {
-  return ["handResult.win", "handResult.blackjackWin"].includes(descriptorKey(entry));
-}
-
-function handLabel(index) {
-  return tr("common.handOrdinal", { hand: index });
+  return ["results.win", "results.twentyOneWin"].includes(descriptorKey(entry));
 }
 
 function loadStoredLanguage() {
   try {
     const stored = localStorage.getItem(STORAGE_LANGUAGE_KEY);
-    return LANGUAGES[stored] ? stored : "zh";
+    return COPY[stored] ? stored : "zh";
   } catch (error) {
     return "zh";
   }
@@ -1542,7 +1581,27 @@ function storeLanguage(language) {
   try {
     localStorage.setItem(STORAGE_LANGUAGE_KEY, language);
   } catch (error) {
-    // Ignore storage failures in file:// or privacy-restricted contexts.
+    // Ignore storage restrictions in file:// contexts.
+  }
+}
+
+function loadStoredOpeningHands() {
+  try {
+    const stored = Number(localStorage.getItem(STORAGE_OPENING_HANDS_KEY));
+    if (Number.isFinite(stored) && stored >= 1 && stored <= MAX_TOTAL_HANDS) {
+      return stored;
+    }
+  } catch (error) {
+    // Ignore storage restrictions in file:// contexts.
+  }
+  return DEFAULT_OPENING_HANDS;
+}
+
+function storeOpeningHands(count) {
+  try {
+    localStorage.setItem(STORAGE_OPENING_HANDS_KEY, String(count));
+  } catch (error) {
+    // Ignore storage restrictions in file:// contexts.
   }
 }
 

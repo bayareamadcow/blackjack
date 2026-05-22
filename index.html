@@ -8,14 +8,14 @@
 </head>
 <body>
   <div class="app-shell">
-    <header class="hero panel">
-      <div class="hero-copy">
+    <header class="topbar panel">
+      <div class="brand-block">
         <p id="hero-eyebrow" class="eyebrow"></p>
         <h1 id="hero-title"></h1>
         <p id="hero-text" class="hero-text"></p>
       </div>
 
-      <div class="hero-actions">
+      <div class="topbar-actions">
         <div class="language-switch" role="group" aria-label="Language switch">
           <button class="lang-button" data-lang="zh" type="button">中文</button>
           <button class="lang-button" data-lang="en" type="button">English</button>
@@ -25,9 +25,9 @@
       </div>
     </header>
 
-    <main class="layout">
-      <section class="panel side-panel">
-        <div class="panel-block">
+    <main class="casino-layout">
+      <aside class="panel control-panel">
+        <section class="panel-block">
           <div class="section-heading">
             <h2 id="finance-heading"></h2>
             <span id="table-limit-pill" class="pill"></span>
@@ -51,6 +51,13 @@
               <strong id="shoe-value">1</strong>
             </div>
           </div>
+        </section>
+
+        <section class="panel-block">
+          <div class="section-heading">
+            <h2 id="wager-heading"></h2>
+            <span id="bet-mode-pill" class="pill accent"></span>
+          </div>
 
           <label id="bet-input-label" class="bet-label" for="bet-input"></label>
           <input id="bet-input" class="bet-input" type="number" min="25" max="500" step="25" value="25">
@@ -62,53 +69,35 @@
             <button class="chip-button" data-bet="250" type="button">$250</button>
             <button class="chip-button" data-bet="500" type="button">$500</button>
           </div>
-        </div>
+        </section>
 
-        <div class="panel-block">
+        <section class="panel-block">
           <div class="section-heading">
-            <h2 id="rules-heading"></h2>
-            <span id="rules-pill" class="pill accent"></span>
+            <h2 id="opening-hands-heading"></h2>
+            <span id="opening-hands-pill" class="pill"></span>
           </div>
-          <ul id="rule-list" class="rule-list"></ul>
-        </div>
-      </section>
 
-      <section class="table-panel">
-        <div class="dealer-zone">
-          <div class="zone-header">
-            <div>
-              <p id="dealer-seat-label" class="zone-label"></p>
-              <h2 id="dealer-heading"></h2>
+          <div id="opening-hand-selector" class="selector-row" aria-label="Opening hands selector">
+            <button class="selector-button" data-hands="1" type="button">1</button>
+            <button class="selector-button" data-hands="2" type="button">2</button>
+            <button class="selector-button" data-hands="3" type="button">3</button>
+            <button class="selector-button" data-hands="4" type="button">4</button>
+            <button class="selector-button" data-hands="5" type="button">5</button>
+          </div>
+
+          <div class="stat-grid secondary-grid">
+            <div class="stat-card">
+              <span id="opening-bet-label" class="stat-label"></span>
+              <strong id="opening-bet-value">$25</strong>
             </div>
-            <div id="dealer-total" class="zone-total"></div>
-          </div>
-          <div id="dealer-cards" class="card-row" aria-live="polite"></div>
-        </div>
-
-        <div id="table-status" class="table-status" aria-live="polite"></div>
-
-        <div id="controls" class="controls" aria-label="Round controls">
-          <button id="deal-btn" class="primary-button" type="button"></button>
-          <button id="hit-btn" type="button"></button>
-          <button id="stand-btn" type="button"></button>
-          <button id="double-btn" type="button"></button>
-          <button id="split-btn" type="button"></button>
-        </div>
-
-        <div class="player-zone">
-          <div class="zone-header">
-            <div>
-              <p id="player-seat-label" class="zone-label"></p>
-              <h2 id="player-heading"></h2>
+            <div class="stat-card">
+              <span id="table-exposure-label" class="stat-label"></span>
+              <strong id="table-exposure-value">$25</strong>
             </div>
-            <div id="player-summary" class="zone-total"></div>
           </div>
-          <div id="player-hands" class="hands-grid"></div>
-        </div>
-      </section>
+        </section>
 
-      <aside class="panel practice-panel">
-        <div class="panel-block">
+        <section class="panel-block">
           <div class="section-heading">
             <h2 id="count-heading"></h2>
             <span id="count-pill" class="pill"></span>
@@ -143,31 +132,82 @@
               <span id="shuffle-flag"></span>
             </div>
           </div>
+        </section>
+      </aside>
+
+      <section class="table-stage panel">
+        <div class="table-surface">
+          <div class="table-arc arc-outer"></div>
+          <div class="table-arc arc-middle"></div>
+          <div class="table-arc arc-inner"></div>
+
+          <div class="dealer-zone">
+            <div class="dealer-header">
+              <div>
+                <p id="dealer-seat-label" class="zone-label"></p>
+                <h2 id="dealer-heading"></h2>
+              </div>
+              <div id="dealer-total" class="zone-total"></div>
+            </div>
+            <div id="dealer-cards" class="card-row" aria-live="polite"></div>
+          </div>
+
+          <div class="table-copy">
+            <p id="table-banner" class="table-banner"></p>
+            <p id="table-subbanner" class="table-subbanner"></p>
+            <p id="table-footnote" class="table-footnote"></p>
+          </div>
+
+          <div id="player-spots" class="player-spots"></div>
+
+          <div class="table-chip chip-left"></div>
+          <div class="table-chip chip-center"></div>
+          <div class="table-chip chip-right"></div>
         </div>
 
-        <div class="panel-block">
+        <div id="table-status" class="table-status" aria-live="polite"></div>
+
+        <div id="controls" class="controls" aria-label="Round controls">
+          <button id="deal-btn" class="primary-button" type="button"></button>
+          <button id="hit-btn" type="button"></button>
+          <button id="stand-btn" type="button"></button>
+          <button id="double-btn" type="button"></button>
+          <button id="split-btn" type="button"></button>
+        </div>
+      </section>
+
+      <aside class="panel info-panel">
+        <section class="panel-block">
+          <div class="section-heading">
+            <h2 id="rules-heading"></h2>
+            <span id="rules-pill" class="pill accent"></span>
+          </div>
+          <ul id="rule-list" class="rule-list"></ul>
+        </section>
+
+        <section class="panel-block">
           <div class="section-heading">
             <h2 id="shortcuts-heading"></h2>
             <span id="shortcuts-pill" class="pill"></span>
           </div>
           <ul id="shortcut-list" class="shortcut-list"></ul>
-        </div>
+        </section>
 
-        <div class="panel-block">
+        <section class="panel-block">
           <div class="section-heading">
             <h2 id="log-heading"></h2>
             <span id="log-pill" class="pill"></span>
           </div>
           <ul id="log-list" class="log-list"></ul>
-        </div>
+        </section>
 
-        <div class="panel-block sources">
+        <section class="panel-block sources">
           <div class="section-heading">
             <h2 id="sources-heading"></h2>
             <span id="sources-pill" class="pill"></span>
           </div>
           <p id="sources-text"></p>
-        </div>
+        </section>
       </aside>
     </main>
   </div>
