@@ -18,6 +18,13 @@ const SUITS = [
   { code: "S", red: false },
 ];
 
+const SUIT_SYMBOLS = {
+  H: "♥",
+  D: "♦",
+  C: "♣",
+  S: "♠",
+};
+
 const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
 const CARD_VALUES = {
@@ -1627,9 +1634,10 @@ function buildCardNode(card) {
     classes.push("back");
     element.className = classes.join(" ");
     element.innerHTML = `
-      <div class="card-corner">TV<span>${t("table.down")}</span></div>
-      <div class="card-center">21</div>
-      <div class="card-corner">TV<span>${t("table.down")}</span></div>
+      <div class="card-back-logo">
+        <span>Yang's</span>
+        <strong>Poker</strong>
+      </div>
     `;
     return element;
   }
@@ -1638,11 +1646,21 @@ function buildCardNode(card) {
     classes.push("red");
   }
 
+  const suit = getSuitSymbol(card.suit);
   element.className = classes.join(" ");
   element.innerHTML = `
-    <div class="card-corner">${card.rank}<span>${card.suit}</span></div>
-    <div class="card-center">${card.rank}-${card.suit}</div>
-    <div class="card-corner">${card.rank}<span>${card.suit}</span></div>
+    <div class="card-corner">
+      <span class="card-rank">${card.rank}</span>
+      <span class="card-suit">${suit}</span>
+    </div>
+    <div class="card-face">
+      <span class="card-rank-big">${card.rank}</span>
+      <span class="card-suit-big">${suit}</span>
+    </div>
+    <div class="card-corner bottom">
+      <span class="card-rank">${card.rank}</span>
+      <span class="card-suit">${suit}</span>
+    </div>
   `;
   return element;
 }
@@ -1651,11 +1669,13 @@ function buildGhostCard(label) {
   const element = document.createElement("div");
   element.className = "card ghost";
   element.innerHTML = `
-    <div class="card-corner">--<span>--</span></div>
     <div class="card-center">${label}</div>
-    <div class="card-corner">--<span>--</span></div>
   `;
   return element;
+}
+
+function getSuitSymbol(suit) {
+  return SUIT_SYMBOLS[suit] || suit;
 }
 
 function buildTag(text, kind = "") {
