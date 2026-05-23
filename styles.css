@@ -58,7 +58,7 @@ button {
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 26px;
+  border-radius: 18px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(14px);
 }
@@ -165,7 +165,7 @@ button {
 
 .casino-layout {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr) 320px;
+  grid-template-columns: 300px minmax(620px, 1fr) 300px;
   gap: 18px;
   align-items: start;
 }
@@ -292,8 +292,12 @@ button {
 
 .table-surface {
   position: relative;
-  min-height: 760px;
-  border-radius: 44px;
+  min-height: 640px;
+  display: grid;
+  grid-template-rows: auto auto minmax(230px, 1fr);
+  gap: 18px;
+  padding: 22px;
+  border-radius: 24px;
   overflow: hidden;
   background:
     radial-gradient(circle at center, rgba(40, 181, 120, 0.15), transparent 26%),
@@ -345,11 +349,9 @@ button {
 }
 
 .dealer-zone {
-  position: absolute;
-  top: 42px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   width: min(620px, calc(100% - 60px));
+  margin: 0 auto;
   z-index: 2;
 }
 
@@ -375,11 +377,9 @@ button {
 }
 
 .table-copy {
-  position: absolute;
-  top: 250px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   width: min(720px, calc(100% - 80px));
+  margin: 0 auto;
   text-align: center;
   z-index: 1;
   pointer-events: none;
@@ -388,40 +388,39 @@ button {
 .table-banner {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(2.2rem, 4vw, 3.8rem);
+  font-size: 2rem;
   color: rgba(255, 249, 230, 0.9);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.04em;
 }
 
 .table-subbanner,
 .table-footnote {
-  margin: 14px 0 0;
+  margin: 8px 0 0;
   color: rgba(255, 249, 230, 0.82);
-  font-size: clamp(1rem, 1.7vw, 1.5rem);
-  letter-spacing: 0.06em;
+  font-size: 1rem;
+  letter-spacing: 0;
 }
 
 .table-footnote {
-  font-size: clamp(0.9rem, 1.45vw, 1.2rem);
+  font-size: 0.9rem;
   color: rgba(249, 241, 222, 0.72);
 }
 
 .player-spots {
-  position: absolute;
-  left: 22px;
-  right: 22px;
-  bottom: 42px;
+  position: relative;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
-  align-items: end;
+  gap: 8px;
+  align-items: stretch;
+  align-self: end;
   z-index: 2;
 }
 
 .spot {
-  min-height: 292px;
-  padding: 18px 12px 16px;
-  border-radius: 28px 28px 36px 36px;
+  min-width: 0;
+  min-height: 236px;
+  padding: 12px 8px;
+  border-radius: 16px;
   border: 2px solid rgba(255, 251, 236, 0.36);
   background:
     linear-gradient(180deg, rgba(8, 48, 36, 0.44), rgba(5, 28, 21, 0.52));
@@ -430,7 +429,6 @@ button {
 }
 
 .spot.active {
-  transform: translateY(-8px);
   border-color: rgba(255, 244, 205, 0.76);
   background:
     linear-gradient(180deg, rgba(16, 76, 56, 0.72), rgba(7, 39, 29, 0.62));
@@ -450,12 +448,12 @@ button {
 .spot-title {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
 }
 
 .spot-seat {
   color: rgba(255, 250, 233, 0.72);
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -463,9 +461,9 @@ button {
 .spot-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  min-height: 30px;
-  margin: 12px 0 12px;
+  gap: 6px;
+  min-height: 25px;
+  margin: 8px 0;
 }
 
 .tag {
@@ -497,34 +495,57 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  min-height: 152px;
+  min-height: 128px;
 }
 
 .spot .card-row {
   align-items: flex-end;
+  flex-wrap: nowrap;
   gap: 0;
-  padding-left: 8px;
+  min-height: 92px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 0 4px 6px;
+  scrollbar-width: thin;
 }
 
 .spot .card-row .card {
-  margin-left: -20px;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 80px;
+  margin-left: -22px;
+  border-radius: 10px;
+  padding: 6px;
 }
 
 .spot .card-row .card:first-child {
   margin-left: 0;
 }
 
+.spot .card-corner {
+  font-size: 0.76rem;
+}
+
+.spot .card-corner span {
+  font-size: 0.62rem;
+}
+
+.spot .card-center {
+  font-size: 0.86rem;
+}
+
 .spot-chipline {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  align-items: end;
-  margin-top: 16px;
+  align-items: center;
+  margin-top: 10px;
 }
 
 .spot-chip {
-  width: 62px;
-  height: 62px;
+  width: 42px;
+  height: 42px;
+  font-size: 0.9rem;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -540,18 +561,13 @@ button {
 
 .spot-meta {
   color: rgba(255, 250, 233, 0.72);
-  font-size: 0.88rem;
-  line-height: 1.5;
+  font-size: 0.72rem;
+  line-height: 1.42;
   text-align: right;
 }
 
 .table-chip {
-  position: absolute;
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  opacity: 0.9;
-  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.22);
+  display: none;
 }
 
 .chip-left {
@@ -609,9 +625,9 @@ button {
 }
 
 .card {
-  width: 90px;
-  height: 130px;
-  border-radius: 16px;
+  width: 82px;
+  height: 118px;
+  border-radius: 12px;
   background: var(--card);
   color: var(--ink);
   padding: 11px 11px 9px;
@@ -651,9 +667,9 @@ button {
 
 .card-center {
   align-self: center;
-  font-size: 1.38rem;
+  font-size: 1.2rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0;
 }
 
 .shoe-meter {
@@ -718,7 +734,7 @@ kbd {
   }
 
   .table-surface {
-    min-height: 700px;
+    min-height: 620px;
   }
 
   .player-spots {
@@ -736,16 +752,30 @@ kbd {
   }
 
   .table-surface {
-    min-height: 840px;
+    min-height: 0;
+    grid-template-rows: auto auto auto;
   }
 
   .player-spots {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    bottom: 26px;
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x mandatory;
   }
 
   .spot {
-    min-height: 272px;
+    min-width: 260px;
+    min-height: 238px;
+    scroll-snap-align: start;
+  }
+
+  .table-banner {
+    font-size: 1.55rem;
+  }
+
+  .table-subbanner,
+  .table-footnote {
+    font-size: 0.86rem;
   }
 }
 
@@ -763,23 +793,46 @@ kbd {
   }
 
   .table-surface {
-    min-height: 1080px;
+    padding: 12px;
+    border-radius: 18px;
   }
 
-  .player-spots {
-    grid-template-columns: 1fr;
+  .dealer-zone {
+    width: 100%;
+  }
+
+  .dealer-header {
+    align-items: start;
+  }
+
+  .table-copy {
+    width: 100%;
+  }
+
+  .spot {
+    min-width: 82vw;
   }
 
   .spot .card-row .card {
-    margin-left: -14px;
+    margin-left: -22px;
   }
 
   .card {
-    width: 80px;
-    height: 116px;
+    width: 74px;
+    height: 106px;
   }
 
   .card-center {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
+  }
+
+  .table-status {
+    font-size: 0.95rem;
+  }
+
+  .controls {
+    padding: 8px;
+    border-radius: 18px;
+    background: rgba(3, 12, 8, 0.86);
   }
 }

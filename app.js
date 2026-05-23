@@ -124,7 +124,7 @@ const COPY = {
       cutMarker: "cut card 约在剩余 15 张",
     },
     table: {
-      banner: "PLAYER 21 赔 3 : 2",
+      banner: "BLACKJACK 赔 3 : 2",
       subbanner: "庄家 soft 17 必须要牌 · 仅 9 / 10 / 11 可 Double",
       footnote: "开局可选 1 到 5 手 · 普通对子总手数上限 5 · A 只可分一次",
       seat: "位置 {index}",
@@ -139,7 +139,7 @@ const COPY = {
         "A,A 只能 split 一次，分完后每手只补一张并自动停牌。",
         "总手数上限为 5，所以开局如果已经选了 5 手，就不能再 split。",
         "剩余约 15 张牌时，当前局打完后进入下一个 shoe。",
-        "这是自定义练习规则：只要 player 最终做成 21 并赢下该手，就按 3:2 奖励。",
+        "前两张牌就是 21 点时，该手自动结束；赢下该手按 3:2 奖励。",
       ],
     },
     shortcutActions: {
@@ -151,7 +151,7 @@ const COPY = {
       toggleCount: "显示 / 隐藏计数",
     },
     sources: {
-      bodyHtml: "公开规则主要参考 Thunder Valley 官方的 <a href=\"https://thundervalleyresort.com/casino/table-games/blackjack\" target=\"_blank\" rel=\"noreferrer\">Blackjack 页面</a> 和 <a href=\"https://www.thundervalleyresort.com/getmedia/blackjack-how-to-play-pdf\" target=\"_blank\" rel=\"noreferrer\">How To Play PDF</a>。开局 1-5 手与“任意 21 赢 3:2”属于这张训练台的自定义练习规则。",
+      bodyHtml: "公开规则主要参考 Thunder Valley 官方的 <a href=\"https://thundervalleyresort.com/casino/table-games/blackjack\" target=\"_blank\" rel=\"noreferrer\">Blackjack 页面</a> 和 <a href=\"https://www.thundervalleyresort.com/getmedia/blackjack-how-to-play-pdf\" target=\"_blank\" rel=\"noreferrer\">How To Play PDF</a>。开局 1-5 手属于这张训练台的自定义练习设置。",
     },
     common: {
       hidden: "隐藏中",
@@ -187,7 +187,7 @@ const COPY = {
       currentHandTurn: "轮到第 {hand} 手牌。",
       currentHandContinue: "第 {hand} 手牌继续行动。",
       dealerBlackjack: "庄家是 blackjack。",
-      openingTwentyOne: "有手牌起手 21，已自动停牌等待结算。",
+      openingTwentyOne: "前两张 21 点已自动停牌并等待 3:2 结算。",
       dealerSkips: "你的手都爆掉了，庄家不用补牌。",
       dealerDone: "庄家行动结束。",
       roundSummary: "{reason} 本局结果：赢 {wins}，输 {losses}，Push {pushes}{shuffleNote}",
@@ -214,7 +214,7 @@ const COPY = {
       doubleDone: "Double 完成",
       splitAcesAuto: "分 A 自动停牌",
       win: "赢 {amount}",
-      twentyOneWin: "21 奖励赢 {amount}",
+      blackjackWin: "Blackjack 赢 {amount}",
       push: "Push",
       dealerBlackjack: "庄家 blackjack",
       lose: "输",
@@ -224,7 +224,7 @@ const COPY = {
       splitAces: "分 A",
       doubled: "Double",
       active: "当前手",
-      blackjackStyle21: "21 赔 3:2",
+      blackjackStyle21: "Blackjack 3:2",
       bust: "爆牌",
       push: "Push",
       win: "赢",
@@ -292,7 +292,7 @@ const COPY = {
       cutMarker: "cut card with about 15 cards remaining",
     },
     table: {
-      banner: "PLAYER 21 PAYS 3 TO 2",
+      banner: "BLACKJACK PAYS 3 TO 2",
       subbanner: "Dealer hits soft 17 · Double only on 9 / 10 / 11",
       footnote: "Choose 1 to 5 opening hands · Max total hands 5 · Aces may be split once",
       seat: "Seat {index}",
@@ -307,7 +307,7 @@ const COPY = {
         "A,A may be split only once, and each split ace hand receives one card then auto-stands.",
         "The total hand cap is 5, so if you open 5 hands at the start you cannot split anymore.",
         "When about 15 cards remain, the next round starts a new shoe.",
-        "This trainer uses a custom rule: any player hand that finishes at 21 and wins pays 3:2.",
+        "When the player's first two cards total 21, that hand immediately stands and wins at 3:2 if it beats the dealer.",
       ],
     },
     shortcutActions: {
@@ -319,7 +319,7 @@ const COPY = {
       toggleCount: "Show / hide count",
     },
     sources: {
-      bodyHtml: "The public rules reference the official Thunder Valley <a href=\"https://thundervalleyresort.com/casino/table-games/blackjack\" target=\"_blank\" rel=\"noreferrer\">Blackjack page</a> and <a href=\"https://www.thundervalleyresort.com/getmedia/blackjack-how-to-play-pdf\" target=\"_blank\" rel=\"noreferrer\">How To Play PDF</a>. The 1-5 opening hand option and the “any 21 pays 3:2” behavior are custom practice rules for this trainer.",
+      bodyHtml: "The public rules reference the official Thunder Valley <a href=\"https://thundervalleyresort.com/casino/table-games/blackjack\" target=\"_blank\" rel=\"noreferrer\">Blackjack page</a> and <a href=\"https://www.thundervalleyresort.com/getmedia/blackjack-how-to-play-pdf\" target=\"_blank\" rel=\"noreferrer\">How To Play PDF</a>. The 1-5 opening hand option is a custom practice setting for this trainer.",
     },
     common: {
       hidden: "Hidden",
@@ -355,7 +355,7 @@ const COPY = {
       currentHandTurn: "Hand {hand} is active.",
       currentHandContinue: "Hand {hand} can keep acting.",
       dealerBlackjack: "The dealer has blackjack.",
-      openingTwentyOne: "One or more opening hands made 21 and auto-stood for settlement.",
+      openingTwentyOne: "A first-two-card 21 has auto-stood for 3:2 settlement.",
       dealerSkips: "All of your hands busted, so the dealer does not draw.",
       dealerDone: "The dealer has finished acting.",
       roundSummary: "{reason} Round result: {wins} win, {losses} loss, {pushes} push{shuffleNote}",
@@ -382,7 +382,7 @@ const COPY = {
       doubleDone: "Double complete",
       splitAcesAuto: "Split aces auto-stand",
       win: "Won {amount}",
-      twentyOneWin: "21 bonus won {amount}",
+      blackjackWin: "Blackjack won {amount}",
       push: "Push",
       dealerBlackjack: "Dealer blackjack",
       lose: "Lost",
@@ -392,7 +392,7 @@ const COPY = {
       splitAces: "Split Aces",
       doubled: "Double",
       active: "Active",
-      blackjackStyle21: "21 pays 3:2",
+      blackjackStyle21: "Blackjack 3:2",
       bust: "Bust",
       push: "Push",
       win: "Win",
@@ -765,6 +765,12 @@ function afterInitialDeal() {
     state.message = desc("status.openingTwentyOne");
   }
 
+  if (state.round.hands.every((hand) => hand.resolved)) {
+    revealDealerHoleCard();
+    finishRound(desc("status.openingTwentyOne"));
+    return;
+  }
+
   state.round.phase = "player-turn";
   focusNextPlayableHand(0);
 }
@@ -1006,9 +1012,9 @@ function finishRound(reason) {
     }
 
     if (dealerBust || handValue.total > dealerValue.total) {
-      if (handValue.total === 21) {
+      if (playerBlackjack) {
         state.bankroll += hand.bet * 2.5;
-        hand.result = desc("results.twentyOneWin", { amount: formatMoney(hand.bet * 1.5) });
+        hand.result = desc("results.blackjackWin", { amount: formatMoney(hand.bet * 1.5) });
       } else {
         state.bankroll += hand.bet * 2;
         hand.result = desc("results.win", { amount: formatMoney(hand.bet) });
@@ -1359,7 +1365,7 @@ function buildHandSpot(hand, index) {
   if (hand.doubled) {
     tagHost.appendChild(buildTag(t("tags.doubled"), "info"));
   }
-  if (total === 21 && !hand.busted) {
+  if (hasBlackjack(hand.cards, hand.fromSplit) && !hand.busted) {
     tagHost.appendChild(buildTag(t("tags.blackjackStyle21"), "success"));
   }
   if (hand.busted) {
@@ -1565,7 +1571,7 @@ function descriptorKey(entry) {
 }
 
 function isWinningResult(entry) {
-  return ["results.win", "results.twentyOneWin"].includes(descriptorKey(entry));
+  return ["results.win", "results.blackjackWin"].includes(descriptorKey(entry));
 }
 
 function loadStoredLanguage() {
