@@ -279,6 +279,15 @@ button {
     rgba(255, 255, 255, 0.06);
 }
 
+.seat-control.locked {
+  opacity: 0.58;
+  border-style: dashed;
+}
+
+.seat-control.locked .seat-toggle strong {
+  color: rgba(255, 250, 233, 0.62);
+}
+
 .seat-control-main {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr);
@@ -524,6 +533,7 @@ button {
 }
 
 .spot {
+  position: relative;
   min-width: 0;
   min-height: 236px;
   padding: 12px 8px;
@@ -536,13 +546,43 @@ button {
 }
 
 .spot.active {
-  border-color: rgba(255, 244, 205, 0.76);
+  transform: translateY(-8px);
+  border-color: rgba(255, 231, 93, 0.98);
   background:
-    linear-gradient(180deg, rgba(16, 76, 56, 0.72), rgba(7, 39, 29, 0.62));
+    radial-gradient(circle at 50% 0%, rgba(255, 231, 93, 0.22), transparent 42%),
+    linear-gradient(180deg, rgba(22, 92, 65, 0.86), rgba(7, 39, 29, 0.68));
+  box-shadow:
+    0 0 0 4px rgba(255, 231, 93, 0.26),
+    0 20px 42px rgba(255, 199, 87, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.spot.active::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(255, 244, 205, 0.58);
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.spot.active .spot-seat,
+.spot.active .spot-title {
+  color: var(--gold-strong);
 }
 
 .spot.empty {
   opacity: 0.44;
+}
+
+.spot.empty.ready {
+  opacity: 0.82;
+  border-color: rgba(255, 244, 205, 0.5);
+}
+
+.spot.empty.locked {
+  opacity: 0.28;
+  border-style: dashed;
 }
 
 .spot-topline {

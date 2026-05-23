@@ -180,6 +180,7 @@ const COPY = {
       waitingDeal: "等待发牌",
       waitingBet: "准备中",
       notPlaying: "不玩",
+      seatLocked: "等下个 Shoe",
       push: "Push",
       seatSelected: "本局玩",
       seatInactive: "本局不玩",
@@ -199,6 +200,7 @@ const COPY = {
       adjustBet: "选择要玩的座位并设好各位置注码后，按“发牌”开始。",
       bankrollLow: "Bankroll 不够覆盖这一局的总押注，先降注或减少位置。",
       noSeats: "至少要选择一个位置才可以发牌。",
+      noMidShoeEntry: "Double deck 不允许中途入场，这个位置要等下一个 shoe。",
       dealing: "发牌中，牌会一张一张发出来。",
       autoNewShoe: "切牌位到了，自动进入下一个 shoe。",
       manualNewShoeActive: "当前局已取消，手动换了一个新 shoe。",
@@ -359,6 +361,7 @@ const COPY = {
       waitingDeal: "Waiting for the deal",
       waitingBet: "Ready",
       notPlaying: "Not playing",
+      seatLocked: "Next shoe",
       push: "Push",
       seatSelected: "Playing",
       seatInactive: "Not playing",
@@ -378,6 +381,7 @@ const COPY = {
       adjustBet: "Choose the seats you want to play, set each wager, then press Deal.",
       bankrollLow: "Your bankroll does not cover the total table action for this round. Lower a bet or play fewer seats.",
       noSeats: "Select at least one seat before dealing.",
+      noMidShoeEntry: "No mid-shoe entry on double deck. This seat can join on the next shoe.",
       dealing: "Dealing now, one card at a time.",
       autoNewShoe: "The cut card was reached, so a new shoe is now in play.",
       manualNewShoeActive: "The current round was cancelled and a new shoe was loaded.",
@@ -509,6 +513,7 @@ const state = {
   visibleCardsSeen: 0,
   countVisible: false,
   shufflePending: false,
+  shoeEntrySeatIndexes: null,
   message: desc("status.adjustBet"),
   shoe: [],
   round: null,
@@ -620,6 +625,12 @@ function toggleSeat(seatIndex) {
     return;
   }
 
+  if (!seat.enabled && isSeatLockedOut(seatIndex)) {
+    state.message = desc("status.noMidShoeEntry");
+    render();
+    return;
+  }
+
   if (seat.enabled && getActiveSeats().length === 1) {
     state.message = desc("status.noSeats");
     render();
@@ -639,6 +650,14 @@ function setSeatBet(seatIndex, nextValue, rerender = true) {
 
   const seat = state.seats[seatIndex];
   if (!seat) {
+    return;
+  }
+
+  if (!seat.enabled && isSeatLockedOut(seatIndex)) {
+    state.message = desc("status.noMidShoeEntry");
+    if (rerender) {
+      render();
+    }
     return;
   }
 
@@ -665,6 +684,7 @@ function buildNewShoe(message) {
   state.runningCount = 0;
   state.visibleCardsSeen = 0;
   state.shufflePending = false;
+  state.shoeEntrySeatIndexes = null;
   state.round = null;
   state.shoeNumber += 1;
   state.message = message;
@@ -743,6 +763,16 @@ async function startRound() {
     buildNewShoe(desc("status.autoNewShoe"));
   }
 
+  const lockedOutSeat = activeSeats.find(({ index }) => isSeatLockedOut(index));
+  if (lockedOutSeat) {
+    state.seats[lockedOutSeat.index].enabled = false;
+    state.message = desc("status.noMidShoeEntry");
+    render();
+    return;
+  }
+
+  lockShoeEntrySeats(activeSeats);
+
   state.roundNumber += 1;
   state.bankroll -= totalAction;
 
@@ -808,6 +838,7 @@ async function dealCardWithAnimation(round, dealCard) {
   }
 
   const card = dealCard();
+  card.justDealt = true;
   render();
   await wait(DEAL_ANIMATION_MS);
   card.justDealt = false;
@@ -844,7 +875,6 @@ function createHand({ bet, cards, fromSplit, isSplitAceHand, pendingDeal, openin
 function dealVisibleCard(target) {
   const card = drawCard();
   exposeCard(card);
-  card.justDealt = true;
   target.cards.push(card);
   return card;
 }
@@ -853,7 +883,6 @@ function dealHiddenCard(target) {
   const card = drawCard();
   card.faceDown = true;
   card.exposed = false;
-  card.justDealt = true;
   target.cards.push(card);
   return card;
 }
@@ -1417,12 +1446,16 @@ function renderLanguageState() {
 
 function renderSeatControls() {
   dom.seatBetGrid.replaceChildren();
-  const disabled = isRoundActive() ? "disabled" : "";
 
   state.seats.forEach((seat, index) => {
     const seatNumber = index + 1;
+    const lockedOut = isSeatLockedOut(index);
+    const controlDisabled = isRoundActive() || lockedOut ? "disabled" : "";
+    const seatStateText = lockedOut
+      ? t("common.seatLocked")
+      : seat.enabled ? t("common.seatToggleOn") : t("common.seatToggleOff");
     const row = document.createElement("article");
-    row.className = `seat-control${seat.enabled ? " active" : ""}`;
+    row.className = `seat-control${seat.enabled ? " active" : ""}${lockedOut ? " locked" : ""}`;
     row.innerHTML = `
       <div class="seat-control-main">
         <button
@@ -1430,10 +1463,10 @@ function renderSeatControls() {
           data-seat-toggle="${index}"
           type="button"
           aria-pressed="${seat.enabled}"
-          ${disabled}
+          ${controlDisabled}
         >
           <span>${t("common.seatControlTitle", { index: seatNumber })}</span>
-          <strong>${seat.enabled ? t("common.seatToggleOn") : t("common.seatToggleOff")}</strong>
+          <strong>${seatStateText}</strong>
         </button>
         <label class="seat-bet-field">
           <span>${t("common.seatBetLabel")}</span>
@@ -1445,7 +1478,7 @@ function renderSeatControls() {
             max="${MAX_BET}"
             step="${BET_STEP}"
             value="${seat.bet}"
-            ${disabled}
+            ${controlDisabled}
           >
         </label>
       </div>
@@ -1457,7 +1490,7 @@ function renderSeatControls() {
             data-seat-index="${index}"
             data-bet="${bet}"
             type="button"
-            ${disabled}
+            ${controlDisabled}
           >${formatMoney(bet).replace(".00", "")}</button>
         `).join("")}
       </div>
@@ -1604,16 +1637,26 @@ function buildHandSpot(hand, displayIndex, handIndex = displayIndex) {
 function buildEmptySpot(index) {
   const seat = state.seats[index] || { enabled: false, bet: MIN_BET };
   const enabledForOpening = !state.round && seat.enabled;
+  const lockedOut = !state.round && isSeatLockedOut(index);
+  const seatTitle = lockedOut
+    ? t("common.seatLocked")
+    : enabledForOpening ? t("common.seatSelected") : t("common.seatInactive");
+  const seatTag = lockedOut
+    ? t("common.seatLocked")
+    : enabledForOpening ? t("table.emptyActive") : t("table.emptyIdle");
+  const statusText = enabledForOpening
+    ? t("common.waitingDeal")
+    : lockedOut ? t("common.seatLocked") : t("common.notPlaying");
   const article = document.createElement("article");
-  article.className = `spot empty${enabledForOpening ? " active" : ""}`;
+  article.className = `spot empty${enabledForOpening ? " ready" : ""}${lockedOut ? " locked" : ""}`;
 
   article.innerHTML = `
     <div class="spot-topline">
       <div>
         <p class="spot-seat">${t("table.seat", { index: index + 1 })}</p>
-        <h3 class="spot-title">${enabledForOpening ? t("common.seatSelected") : t("common.seatInactive")}</h3>
+        <h3 class="spot-title">${seatTitle}</h3>
       </div>
-      <span class="tag">${enabledForOpening ? t("table.emptyActive") : t("table.emptyIdle")}</span>
+      <span class="tag">${seatTag}</span>
     </div>
     <div class="spot-tags"></div>
     <div class="card-row"></div>
@@ -1621,7 +1664,7 @@ function buildEmptySpot(index) {
       <div class="spot-chip">${enabledForOpening ? formatMoney(seat.bet).replace(".00", "") : "--"}</div>
       <div class="spot-meta">
         ${t("common.totalPrefix", { total: "--", soft: "" })}<br>
-        ${t("common.statusPrefix", { state: enabledForOpening ? t("common.waitingDeal") : t("common.notPlaying") })}
+        ${t("common.statusPrefix", { state: statusText })}
       </div>
     </div>
   `;
@@ -1748,6 +1791,22 @@ function getActiveSeats() {
   return state.seats
     .map((seat, index) => ({ seat, index }))
     .filter(({ seat }) => seat.enabled);
+}
+
+function lockShoeEntrySeats(activeSeats) {
+  if (!Array.isArray(state.shoeEntrySeatIndexes)) {
+    state.shoeEntrySeatIndexes = activeSeats.map(({ index }) => index);
+  }
+}
+
+function isShoeEntryLocked() {
+  return Array.isArray(state.shoeEntrySeatIndexes)
+    && !state.shufflePending
+    && state.shoe.length > CUT_CARD_REMAINING;
+}
+
+function isSeatLockedOut(seatIndex) {
+  return isShoeEntryLocked() && !state.shoeEntrySeatIndexes.includes(seatIndex);
 }
 
 function formatSeatList(seats) {
