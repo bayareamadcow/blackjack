@@ -762,6 +762,11 @@ button {
   box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
 }
 
+.card.dealt {
+  animation: deal-card 260ms cubic-bezier(0.18, 0.8, 0.28, 1) both;
+  transform-origin: 50% 100%;
+}
+
 .card.red {
   color: var(--card-red);
 }
@@ -870,6 +875,26 @@ button {
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0;
+}
+
+@keyframes deal-card {
+  0% {
+    opacity: 0;
+    transform: translate3d(74px, -88px, 0) rotate(9deg) scale(0.84);
+    filter: blur(2px);
+  }
+
+  64% {
+    opacity: 1;
+    transform: translate3d(-4px, 4px, 0) rotate(-2deg) scale(1.03);
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    filter: blur(0);
+  }
 }
 
 .shoe-meter {
@@ -1053,5 +1078,11 @@ kbd {
     padding: 8px;
     border-radius: 18px;
     background: rgba(3, 12, 8, 0.86);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card.dealt {
+    animation: none;
   }
 }

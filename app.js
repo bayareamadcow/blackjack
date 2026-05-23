@@ -7,6 +7,7 @@ const CUT_CARD_REMAINING = 15;
 const MAX_TOTAL_HANDS = 5;
 const STARTING_BANKROLL = 5000;
 const LOG_LIMIT = 10;
+const DEAL_ANIMATION_MS = 280;
 const STORAGE_LANGUAGE_KEY = "doubleDeckTrainerLanguage";
 const STORAGE_SEAT_CONFIG_KEY = "doubleDeckTrainerSeatConfig";
 const QUICK_BETS = [25, 50, 100, 200, 500];
@@ -198,6 +199,7 @@ const COPY = {
       adjustBet: "选择要玩的座位并设好各位置注码后，按“发牌”开始。",
       bankrollLow: "Bankroll 不够覆盖这一局的总押注，先降注或减少位置。",
       noSeats: "至少要选择一个位置才可以发牌。",
+      dealing: "发牌中，牌会一张一张发出来。",
       autoNewShoe: "切牌位到了，自动进入下一个 shoe。",
       manualNewShoeActive: "当前局已取消，手动换了一个新 shoe。",
       manualNewShoeIdle: "手动换了一个新 shoe。",
@@ -376,6 +378,7 @@ const COPY = {
       adjustBet: "Choose the seats you want to play, set each wager, then press Deal.",
       bankrollLow: "Your bankroll does not cover the total table action for this round. Lower a bet or play fewer seats.",
       noSeats: "Select at least one seat before dealing.",
+      dealing: "Dealing now, one card at a time.",
       autoNewShoe: "The cut card was reached, so a new shoe is now in play.",
       manualNewShoeActive: "The current round was cancelled and a new shoe was loaded.",
       manualNewShoeIdle: "A new shoe was loaded.",
@@ -717,7 +720,7 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-function startRound() {
+async function startRound() {
   if (isRoundActive()) {
     return;
   }
@@ -754,18 +757,14 @@ function startRound() {
     }),
   );
 
-  state.round = {
+  const round = {
     phase: "dealing",
     dealer: { cards: [] },
     hands,
     activeHandIndex: 0,
     acesSplitUsed: false,
   };
-
-  hands.forEach((hand) => dealVisibleCard(hand));
-  dealVisibleCard(state.round.dealer);
-  hands.forEach((hand) => dealVisibleCard(hand));
-  dealHiddenCard(state.round.dealer);
+  state.round = round;
 
   addLog(desc("logs.roundStart", {
     round: state.roundNumber,
@@ -773,8 +772,56 @@ function startRound() {
     total: formatMoney(totalAction),
   }));
 
+  state.message = desc("status.dealing");
+  render();
+  const completedDeal = await dealOpeningCards(round, hands);
+  if (!completedDeal) {
+    return;
+  }
   afterInitialDeal();
   render();
+}
+
+async function dealOpeningCards(round, hands) {
+  for (const hand of hands) {
+    if (!(await dealCardWithAnimation(round, () => dealVisibleCard(hand)))) {
+      return false;
+    }
+  }
+
+  if (!(await dealCardWithAnimation(round, () => dealVisibleCard(round.dealer)))) {
+    return false;
+  }
+
+  for (const hand of hands) {
+    if (!(await dealCardWithAnimation(round, () => dealVisibleCard(hand)))) {
+      return false;
+    }
+  }
+
+  return dealCardWithAnimation(round, () => dealHiddenCard(round.dealer));
+}
+
+async function dealCardWithAnimation(round, dealCard) {
+  if (!isCurrentDealingRound(round)) {
+    return false;
+  }
+
+  const card = dealCard();
+  render();
+  await wait(DEAL_ANIMATION_MS);
+  card.justDealt = false;
+  return isCurrentDealingRound(round);
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
+function isCurrentDealingRound(round) {
+  return state.round === round && round.phase === "dealing";
 }
 
 function createHand({ bet, cards, fromSplit, isSplitAceHand, pendingDeal, openingSpot }) {
@@ -797,6 +844,7 @@ function createHand({ bet, cards, fromSplit, isSplitAceHand, pendingDeal, openin
 function dealVisibleCard(target) {
   const card = drawCard();
   exposeCard(card);
+  card.justDealt = true;
   target.cards.push(card);
   return card;
 }
@@ -805,6 +853,7 @@ function dealHiddenCard(target) {
   const card = drawCard();
   card.faceDown = true;
   card.exposed = false;
+  card.justDealt = true;
   target.cards.push(card);
   return card;
 }
@@ -1632,6 +1681,9 @@ function buildCardNode(card) {
 
   if (card.faceDown) {
     classes.push("back");
+    if (card.justDealt) {
+      classes.push("dealt");
+    }
     element.className = classes.join(" ");
     element.innerHTML = `
       <div class="card-back-logo">
@@ -1644,6 +1696,9 @@ function buildCardNode(card) {
 
   if (card.red) {
     classes.push("red");
+  }
+  if (card.justDealt) {
+    classes.push("dealt");
   }
 
   const suit = getSuitSymbol(card.suit);
