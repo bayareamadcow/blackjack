@@ -148,6 +148,13 @@ button {
   transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
 }
 
+.online-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 43px;
+  text-decoration: none;
+}
+
 .ghost-button:hover,
 .controls button:hover:not(:disabled),
 .chip-button:hover,

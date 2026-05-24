@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mad Cow Casino 580 Online Blackjack</title>
+  <link rel="stylesheet" href="online.css?v=20260524-shared">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <p>Online Tournament Table</p>
+        <h1>Mad Cow Casino 580</h1>
+        <span>21点共享桌 · 5 个座位 · Bankroll 和百家乐合并</span>
+      </div>
+      <nav class="game-nav" aria-label="Game switch">
+        <a href="https://bayareamadcow.github.io/baccarat/">百家乐 Baccarat</a>
+        <a class="active" href="online.html">21点 Blackjack</a>
+        <a href="index.html">练习版 Trainer</a>
+      </nav>
+      <div class="identity-card">
+        <label>
+          名字
+          <input id="player-name" maxlength="16" autocomplete="nickname" placeholder="Your name">
+        </label>
+        <label>
+          房间
+          <input id="room-code" maxlength="32" placeholder="mad-cow-580">
+        </label>
+        <button id="save-profile" type="button">进入</button>
+      </div>
+    </header>
+
+    <section class="stats-strip" aria-label="Player stats">
+      <div><span>Bankroll</span><strong id="bankroll">$5,000</strong></div>
+      <div><span>Score</span><strong id="score">$0</strong></div>
+      <div><span>Reload</span><strong id="reloads">0</strong></div>
+      <div><span>Shoe</span><strong id="shoe">1</strong></div>
+      <div><span>Cards</span><strong id="cards-left">104</strong></div>
+    </section>
+
+    <main class="casino-layout">
+      <section class="table-column">
+        <section class="dealer-panel">
+          <div class="panel-heading">
+            <div>
+              <span>Dealer</span>
+              <h2>庄家</h2>
+            </div>
+            <strong id="dealer-total">--</strong>
+          </div>
+          <div id="dealer-cards" class="card-row"></div>
+        </section>
+
+        <section class="message-panel">
+          <span id="phase-pill">Waiting</span>
+          <strong id="table-message">Choose a seat to join the blackjack table.</strong>
+        </section>
+
+        <section id="seat-grid" class="seat-grid" aria-label="Blackjack seats"></section>
+
+        <section class="action-panel">
+          <div class="chip-row" aria-label="Bet choices">
+            <button class="chip selected" data-bet="25" type="button">$25</button>
+            <button class="chip" data-bet="50" type="button">$50</button>
+            <button class="chip" data-bet="100" type="button">$100</button>
+            <button class="chip" data-bet="200" type="button">$200</button>
+            <button class="chip" data-bet="500" type="button">$500</button>
+          </div>
+          <div class="action-buttons">
+            <button id="start-hand" class="primary" type="button">发牌</button>
+            <button id="hit" type="button">补牌 Hit</button>
+            <button id="stand" type="button">停牌 Stand</button>
+            <button id="double" type="button">Double</button>
+            <button id="leave-seat" type="button">离座</button>
+            <button id="reload" type="button">Reload</button>
+          </div>
+        </section>
+      </section>
+
+      <aside class="leaderboard-panel">
+        <div class="panel-heading compact">
+          <div>
+            <span>Top 10</span>
+            <h2>Leaderboard</h2>
+          </div>
+        </div>
+        <ol id="leaderboard" class="leaderboard"></ol>
+      </aside>
+    </main>
+  </div>
+
+  <div id="name-gate" class="name-gate" hidden>
+    <div class="gate-card">
+      <p>Mad Cow Casino 580</p>
+      <h2>先输入你的名字</h2>
+      <span>朋友进同一个房间后，可以互相看到座位、牌和输赢。</span>
+      <input id="gate-name" maxlength="16" autocomplete="nickname" placeholder="例如 Yang">
+      <button id="gate-enter" type="button">进入在线桌</button>
+    </div>
+  </div>
+
+  <script src="online.js?v=20260524-shared"></script>
+</body>
+</html>
