@@ -41,6 +41,7 @@ let seenCards = new Set();
 let polling = null;
 let busy = false;
 let lastBankroll = null;
+let seenSeatResults = new Set();
 
 dom.playerName.value = playerName;
 dom.roomCode.value = room;
@@ -168,6 +169,7 @@ function renderSeats(table) {
   for (const seat of table.seats) {
     const card = document.createElement("article");
     const actionLabel = getSeatActionLabel(seat);
+    const resultBurst = getSeatResultBurst(table, seat);
     const hands = seat.hands?.length ? seat.hands : [{
       handIndex: 0,
       bet: seat.bet,
@@ -183,6 +185,8 @@ function renderSeats(table) {
       seat.self ? "self" : "",
       seat.turn ? "turn" : "",
       seat.needsBet ? "needs-bet" : "",
+      resultBurst?.tone ? `result-${resultBurst.tone}` : "",
+      resultBurst?.animate ? "result-pop" : "",
       seat.settledNet > 0 ? "won" : "",
       seat.settledNet < 0 ? "lost" : "",
     ].filter(Boolean).join(" ");
@@ -192,6 +196,12 @@ function renderSeats(table) {
       ? (seat.needsBet ? "Rebet" : formatMoney(seat.totalBet ?? seat.bet))
       : `+${formatMoney(selectedBet)}`;
     card.innerHTML = `
+      ${resultBurst?.animate ? `
+        <div class="seat-result-burst ${resultBurst.tone}" aria-hidden="true">
+          <strong>${resultBurst.title}</strong>
+          <span>${resultBurst.subtitle}</span>
+        </div>
+      ` : ""}
       <div class="seat-header">
         <div class="avatar">${escapeHtml(avatarText)}</div>
         <div class="seat-name">
@@ -230,6 +240,36 @@ function renderSeats(table) {
     }
     dom.seatGrid.appendChild(card);
   }
+}
+
+function getSeatResultBurst(table, seat) {
+  if (table.phase !== "settled" || !seat.playerId || !seat.hands?.length) return null;
+  const hasSettledResult = seat.hands.some((hand) => hand.result || hand.outcome);
+  if (!hasSettledResult) return null;
+
+  let tone = "push";
+  let title = "PUSH";
+  let subtitle = "\u548c";
+  if (seat.settledNet > 0) {
+    tone = "win";
+    title = "WIN";
+    subtitle = `\u8d62 ${formatMoney(seat.settledNet)}`;
+  } else if (seat.settledNet < 0) {
+    tone = "lose";
+    title = "LOSE";
+    subtitle = `\u8f93 ${formatMoney(Math.abs(seat.settledNet))}`;
+  }
+
+  const key = [
+    table.roundNumber,
+    seat.seat,
+    tone,
+    seat.settledNet,
+    seat.hands.map((hand) => `${hand.handIndex}:${hand.outcome}:${hand.settledNet}`).join("|"),
+  ].join("-");
+  const animate = !seenSeatResults.has(key);
+  if (animate) seenSeatResults.add(key);
+  return { tone, title, subtitle, animate };
 }
 
 function getSeatActionLabel(seat) {
