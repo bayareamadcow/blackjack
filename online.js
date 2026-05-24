@@ -200,7 +200,7 @@ function renderCards(host, cards, scope) {
     const node = buildCard(card);
     if (!seenCards.has(id)) {
       node.classList.add("dealt");
-      node.style.animationDelay = `${index * 130}ms`;
+      node.style.animationDelay = `${index * 260}ms`;
       seenCards.add(id);
     }
     host.appendChild(node);
