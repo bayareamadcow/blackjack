@@ -152,8 +152,8 @@ function render() {
   dom.shoe.textContent = table.shoeNumber;
   dom.cardsLeft.textContent = table.cardsRemaining;
   dom.phasePill.textContent = formatPhaseLabel(table);
-  dom.phasePill.classList.toggle("countdown-hot", table.phase === "player-turn" && table.secondsRemaining <= 5);
-  dom.tableMessage.textContent = table.message;
+  dom.phasePill.classList.toggle("countdown-hot", isHotCountdown(table));
+  dom.tableMessage.textContent = formatTableMessage(table);
   dom.dealerTotal.textContent = table.dealer.total ?? "--";
 
   renderCards(dom.dealerCards, table.dealer.cards, `r${table.roundNumber}-dealer`);
@@ -268,7 +268,7 @@ function buildCard(card) {
   const node = document.createElement("div");
   if (card.faceDown) {
     node.className = "card back";
-    node.textContent = "YANG'S BLACKJACK";
+    node.innerHTML = "<span class=\"back-logo\"><b>YANG'S</b><b>BLACKJACK</b></span>";
     return node;
   }
   node.className = `card ${card.red ? "red" : "black"}`;
@@ -283,6 +283,8 @@ function buildCard(card) {
 function renderButtons(table) {
   const mySeat = table.seats.find((seat) => seat.self);
   const activeHand = mySeat?.hands?.find((hand) => hand.turn) || null;
+  const dealCountdownActive = hasFundedSeat(table) && ["waiting", "settled"].includes(table.phase) && table.dealSecondsRemaining > 0;
+  dom.startHand.textContent = dealCountdownActive ? `发牌 ${table.dealSecondsRemaining}s` : "发牌";
   dom.startHand.disabled = !table.canStart || !["waiting", "settled"].includes(table.phase);
   dom.hit.disabled = !table.canAct;
   dom.stand.disabled = !table.canAct;
@@ -367,10 +369,29 @@ function formatPhase(phase) {
 }
 
 function formatPhaseLabel(table) {
+  if (hasFundedSeat(table) && ["waiting", "settled"].includes(table.phase) && table.dealSecondsRemaining > 0) {
+    return `下注 ${table.dealSecondsRemaining}s`;
+  }
   if (table.phase === "player-turn" && Number.isFinite(table.secondsRemaining)) {
     return `${formatPhase(table.phase)} ${table.secondsRemaining}s`;
   }
   return formatPhase(table.phase);
+}
+
+function formatTableMessage(table) {
+  if (hasFundedSeat(table) && ["waiting", "settled"].includes(table.phase) && table.dealSecondsRemaining > 0) {
+    return `下注准备中：${table.dealSecondsRemaining} 秒后才可以发牌。`;
+  }
+  return table.message;
+}
+
+function isHotCountdown(table) {
+  if (table.phase === "player-turn" && table.secondsRemaining <= 5) return true;
+  return hasFundedSeat(table) && ["waiting", "settled"].includes(table.phase) && table.dealSecondsRemaining > 0 && table.dealSecondsRemaining <= 5;
+}
+
+function hasFundedSeat(table) {
+  return table.seats?.some((seat) => seat.playerId && seat.bet >= 25);
 }
 
 function formatMoney(amount) {

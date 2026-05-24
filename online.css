@@ -263,16 +263,27 @@ button {
 }
 
 .card.back {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--gold);
   background:
     repeating-linear-gradient(45deg, rgba(255, 226, 138, 0.16) 0 8px, transparent 8px 16px),
     linear-gradient(145deg, #4b123f, #230725);
   border: 3px solid rgba(255, 255, 255, 0.72);
+  padding: 7px;
   text-align: center;
-  font-weight: 900;
-  letter-spacing: 0.09em;
+}
+
+.back-logo {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  transform: translateY(1px);
+  font-size: 0.92rem;
+  font-weight: 1000;
+  letter-spacing: 0.045em;
+  line-height: 1.05;
 }
 
 .rank-top,
@@ -516,6 +527,10 @@ button {
 
 .card-row.compact .suit-center {
   font-size: 1.9rem;
+}
+
+.card-row.compact .back-logo {
+  font-size: 0.68rem;
 }
 
 .seat-actions {
