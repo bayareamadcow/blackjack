@@ -76,7 +76,7 @@ dom.chipRow.addEventListener("click", (event) => {
 dom.seatGrid.addEventListener("click", (event) => {
   const joinButton = event.target.closest("[data-join-seat]");
   if (!joinButton) return;
-  sendAction("seat", { seat: Number(joinButton.dataset.joinSeat), bet: selectedBet });
+  sendAction("seat", { seat: Number(joinButton.dataset.joinSeat), bet: selectedBet, mode: "add" });
 });
 
 dom.startHand.addEventListener("click", () => sendAction("start"));
@@ -106,7 +106,7 @@ function saveIdentity(nextName, nextRoom) {
 async function refreshNow() {
   clearInterval(polling);
   await sendAction("state", {}, { quiet: true });
-  polling = setInterval(() => sendAction("state", {}, { quiet: true }), 1300);
+  polling = setInterval(() => sendAction("state", {}, { quiet: true }), 1000);
 }
 
 async function sendAction(endpoint, payload = {}, options = {}) {
@@ -148,7 +148,7 @@ function render() {
   dom.reloads.textContent = player.reloadCount;
   dom.shoe.textContent = table.shoeNumber;
   dom.cardsLeft.textContent = table.cardsRemaining;
-  dom.phasePill.textContent = formatPhase(table.phase);
+  dom.phasePill.textContent = formatPhaseLabel(table);
   dom.tableMessage.textContent = table.message;
   dom.dealerTotal.textContent = table.dealer.total ?? "--";
 
@@ -162,6 +162,7 @@ function renderSeats(table) {
   dom.seatGrid.replaceChildren();
   for (const seat of table.seats) {
     const card = document.createElement("article");
+    const actionLabel = getSeatActionLabel(seat);
     card.className = [
       "seat-card",
       seat.playerId ? "" : "empty",
@@ -177,20 +178,28 @@ function renderSeats(table) {
           <span>Seat ${seat.seat}</span>
           <h3>${escapeHtml(seat.name || "Open")}</h3>
         </div>
-        <div class="seat-bet">${seat.playerId ? formatMoney(seat.bet) : formatMoney(selectedBet)}</div>
+        <div class="seat-bet">${seat.playerId ? formatMoney(seat.bet) : `+${formatMoney(selectedBet)}`}</div>
       </div>
       <div class="seat-total">${seat.total === null ? "--" : `Total ${seat.total}`}</div>
       <div class="seat-result">${formatSeatResult(seat)}</div>
       <div class="card-row" data-seat-cards="${seat.seat}"></div>
       <div class="seat-actions">
-        <button class="join" data-join-seat="${seat.seat}" type="button">${seat.self ? "更新下注" : seat.playerId ? "已占用" : "坐这里"}</button>
+        <button class="join" data-join-seat="${seat.seat}" type="button">${actionLabel}</button>
       </div>
     `;
     const joinButton = card.querySelector("[data-join-seat]");
-    joinButton.disabled = Boolean(seat.playerId && !seat.self) || !["waiting", "settled"].includes(table.phase);
+    joinButton.disabled = Boolean(seat.playerId && !seat.self) || !["waiting", "settled"].includes(table.phase) || (seat.self && seat.bet >= 500);
     renderCards(card.querySelector("[data-seat-cards]"), seat.cards, `r${table.roundNumber}-s${seat.seat}`);
     dom.seatGrid.appendChild(card);
   }
+}
+
+function getSeatActionLabel(seat) {
+  if (seat.self) {
+    return seat.bet >= 500 ? "Max $500" : `Add +${formatMoney(selectedBet)}`;
+  }
+  if (seat.playerId) return "Taken";
+  return `Sit +${formatMoney(selectedBet)}`;
 }
 
 function renderCards(host, cards, scope) {
@@ -264,11 +273,14 @@ function canDouble(seat, bankroll) {
 }
 
 function formatSeatResult(seat) {
-  if (!seat.playerId) return "选择筹码后坐下";
+  if (!seat.playerId) return "Pick one chip, then sit.";
   if (seat.turn) return "轮到这个座位行动";
   if (seat.result) {
     const net = seat.settledNet ? ` · ${seat.settledNet > 0 ? "+" : ""}${formatMoney(seat.settledNet)}` : "";
     return `${seat.result}${net}`;
+  }
+  if (seat.self && ["waiting", "settled"].includes(state?.blackjack?.phase)) {
+    return "Tap chips to add. Max $500.";
   }
   if (seat.active) return "本手进行中";
   return "等待发牌";
@@ -283,6 +295,13 @@ function formatPhase(phase) {
     settled: "Settled",
   };
   return labels[phase] || phase;
+}
+
+function formatPhaseLabel(table) {
+  if (table.phase === "player-turn" && Number.isFinite(table.secondsRemaining)) {
+    return `${formatPhase(table.phase)} ${table.secondsRemaining}s`;
+  }
+  return formatPhase(table.phase);
 }
 
 function formatMoney(amount) {
