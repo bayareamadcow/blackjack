@@ -385,6 +385,16 @@ button {
   box-shadow: 0 0 0 3px rgba(255, 77, 99, 0.14), var(--shadow);
 }
 
+.seat-card.needs-bet {
+  border-color: #ff4d63;
+  background: linear-gradient(180deg, rgba(92, 16, 28, 0.55), rgba(4, 38, 25, 0.78));
+}
+
+.seat-card.needs-bet .seat-bet {
+  color: #fff6f7;
+  background: linear-gradient(135deg, #ff4d63, #9b152b);
+}
+
 .seat-card.empty {
   opacity: 0.76;
 }

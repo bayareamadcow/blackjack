@@ -182,11 +182,15 @@ function renderSeats(table) {
       seat.playerId ? "" : "empty",
       seat.self ? "self" : "",
       seat.turn ? "turn" : "",
+      seat.needsBet ? "needs-bet" : "",
       seat.settledNet > 0 ? "won" : "",
       seat.settledNet < 0 ? "lost" : "",
     ].filter(Boolean).join(" ");
 
     const avatarText = seat.name ? seat.name.slice(0, 1).toUpperCase() : seat.seat;
+    const seatBetLabel = seat.playerId
+      ? (seat.needsBet ? "Rebet" : formatMoney(seat.totalBet ?? seat.bet))
+      : `+${formatMoney(selectedBet)}`;
     card.innerHTML = `
       <div class="seat-header">
         <div class="avatar">${escapeHtml(avatarText)}</div>
@@ -194,7 +198,7 @@ function renderSeats(table) {
           <span>Seat ${seat.seat}</span>
           <h3>${escapeHtml(seat.name || "Open")}</h3>
         </div>
-        <div class="seat-bet">${seat.playerId ? formatMoney(seat.totalBet ?? seat.bet) : `+${formatMoney(selectedBet)}`}</div>
+        <div class="seat-bet">${seatBetLabel}</div>
       </div>
       <div class="seat-total">${seat.total === null ? "--" : `Total ${seat.total}`}${seat.hands?.length > 1 ? ` · ${seat.hands.length} hands` : ""}</div>
       <div class="seat-result">${formatSeatResult(seat)}</div>
@@ -230,6 +234,7 @@ function renderSeats(table) {
 
 function getSeatActionLabel(seat) {
   if (seat.self) {
+    if (seat.needsBet || seat.bet < 25) return `Rebet +${formatMoney(selectedBet)}`;
     return seat.bet >= 500 ? "Max $500" : `Add +${formatMoney(selectedBet)}`;
   }
   if (seat.playerId) return "Taken";
@@ -316,9 +321,11 @@ function formatSeatResult(seat) {
   if (activeHand) return `Action on hand ${activeHand.handIndex + 1}.`;
   if (seat.result) {
     const net = seat.settledNet ? ` · ${seat.settledNet > 0 ? "+" : ""}${formatMoney(seat.settledNet)}` : "";
+    if (seat.needsBet) return `${seat.result}${net}. Lost hand: put chips back or this seat stands up.`;
     return `${seat.result}${net}`;
   }
   if (seat.self && ["waiting", "settled"].includes(state?.blackjack?.phase)) {
+    if (seat.needsBet || seat.bet < 25) return "Lost hand: rebet before the next deal.";
     return "Tap chips to add. Max $500.";
   }
   if (seat.active) return "本手进行中";
