@@ -22,6 +22,7 @@ const dom = {
   hit: document.querySelector("#hit"),
   stand: document.querySelector("#stand"),
   double: document.querySelector("#double"),
+  split: document.querySelector("#split"),
   leaveSeat: document.querySelector("#leave-seat"),
   reload: document.querySelector("#reload"),
   chipRow: document.querySelector(".chip-row"),
@@ -39,6 +40,7 @@ let state = null;
 let seenCards = new Set();
 let polling = null;
 let busy = false;
+let lastBankroll = null;
 
 dom.playerName.value = playerName;
 dom.roomCode.value = room;
@@ -83,6 +85,7 @@ dom.startHand.addEventListener("click", () => sendAction("start"));
 dom.hit.addEventListener("click", () => sendAction("action", { action: "hit" }));
 dom.stand.addEventListener("click", () => sendAction("action", { action: "stand" }));
 dom.double.addEventListener("click", () => sendAction("action", { action: "double" }));
+dom.split.addEventListener("click", () => sendAction("action", { action: "split" }));
 dom.leaveSeat.addEventListener("click", () => sendAction("leave"));
 dom.reload.addEventListener("click", () => sendAction("reload"));
 
@@ -149,6 +152,7 @@ function render() {
   dom.shoe.textContent = table.shoeNumber;
   dom.cardsLeft.textContent = table.cardsRemaining;
   dom.phasePill.textContent = formatPhaseLabel(table);
+  dom.phasePill.classList.toggle("countdown-hot", table.phase === "player-turn" && table.secondsRemaining <= 5);
   dom.tableMessage.textContent = table.message;
   dom.dealerTotal.textContent = table.dealer.total ?? "--";
 
@@ -156,6 +160,7 @@ function render() {
   renderSeats(table);
   renderLeaderboard(state.leaderboard);
   renderButtons(table);
+  renderBankrollFeedback(player.bankroll);
 }
 
 function renderSeats(table) {
@@ -163,11 +168,22 @@ function renderSeats(table) {
   for (const seat of table.seats) {
     const card = document.createElement("article");
     const actionLabel = getSeatActionLabel(seat);
+    const hands = seat.hands?.length ? seat.hands : [{
+      handIndex: 0,
+      bet: seat.bet,
+      cards: seat.cards || [],
+      total: seat.total,
+      result: seat.result,
+      settledNet: seat.settledNet,
+      turn: seat.turn,
+    }];
     card.className = [
       "seat-card",
       seat.playerId ? "" : "empty",
       seat.self ? "self" : "",
       seat.turn ? "turn" : "",
+      seat.settledNet > 0 ? "won" : "",
+      seat.settledNet < 0 ? "lost" : "",
     ].filter(Boolean).join(" ");
 
     const avatarText = seat.name ? seat.name.slice(0, 1).toUpperCase() : seat.seat;
@@ -178,18 +194,36 @@ function renderSeats(table) {
           <span>Seat ${seat.seat}</span>
           <h3>${escapeHtml(seat.name || "Open")}</h3>
         </div>
-        <div class="seat-bet">${seat.playerId ? formatMoney(seat.bet) : `+${formatMoney(selectedBet)}`}</div>
+        <div class="seat-bet">${seat.playerId ? formatMoney(seat.totalBet ?? seat.bet) : `+${formatMoney(selectedBet)}`}</div>
       </div>
-      <div class="seat-total">${seat.total === null ? "--" : `Total ${seat.total}`}</div>
+      <div class="seat-total">${seat.total === null ? "--" : `Total ${seat.total}`}${seat.hands?.length > 1 ? ` · ${seat.hands.length} hands` : ""}</div>
       <div class="seat-result">${formatSeatResult(seat)}</div>
-      <div class="card-row" data-seat-cards="${seat.seat}"></div>
+      <div class="seat-hands">
+        ${hands.map((hand) => `
+          <div class="seat-hand ${hand.turn ? "turn" : ""} ${hand.outcome || ""}" data-hand="${hand.handIndex}">
+            <div class="hand-meta">
+              <span>Hand ${hand.handIndex + 1}</span>
+              <strong>${formatMoney(hand.bet || seat.bet)}</strong>
+              <em>${hand.total === null || hand.total === undefined ? "--" : hand.total}</em>
+            </div>
+            <div class="hand-status">${formatHandStatus(hand)}</div>
+            <div class="card-row compact" data-seat-cards="${seat.seat}" data-hand-cards="${hand.handIndex}"></div>
+          </div>
+        `).join("")}
+      </div>
       <div class="seat-actions">
         <button class="join" data-join-seat="${seat.seat}" type="button">${actionLabel}</button>
       </div>
     `;
     const joinButton = card.querySelector("[data-join-seat]");
     joinButton.disabled = Boolean(seat.playerId && !seat.self) || !["waiting", "settled"].includes(table.phase) || (seat.self && seat.bet >= 500);
-    renderCards(card.querySelector("[data-seat-cards]"), seat.cards, `r${table.roundNumber}-s${seat.seat}`);
+    for (const hand of hands) {
+      renderCards(
+        card.querySelector(`[data-hand-cards="${hand.handIndex}"]`),
+        hand.cards || [],
+        `r${table.roundNumber}-s${seat.seat}-h${hand.handIndex}`,
+      );
+    }
     dom.seatGrid.appendChild(card);
   }
 }
@@ -203,17 +237,26 @@ function getSeatActionLabel(seat) {
 }
 
 function renderCards(host, cards, scope) {
+  if (!host) return;
   host.replaceChildren();
   cards.forEach((card, index) => {
     const id = `${scope}-${card.id}-${card.faceDown ? "down" : "up"}`;
     const node = buildCard(card);
     if (!seenCards.has(id)) {
       node.classList.add("dealt");
-      node.style.animationDelay = `${index * 260}ms`;
+      node.style.animationDelay = `${getCardDelay(scope, card, index)}ms`;
       seenCards.add(id);
     }
     host.appendChild(node);
   });
+}
+
+function getCardDelay(scope, card, index) {
+  if (scope.includes("dealer") && !card.faceDown) {
+    if (index === 1) return 2000;
+    if (index >= 2) return 2000 + (index - 1) * 1000;
+  }
+  return index * 260;
 }
 
 function buildCard(card) {
@@ -234,10 +277,12 @@ function buildCard(card) {
 
 function renderButtons(table) {
   const mySeat = table.seats.find((seat) => seat.self);
+  const activeHand = mySeat?.hands?.find((hand) => hand.turn) || null;
   dom.startHand.disabled = !table.canStart || !["waiting", "settled"].includes(table.phase);
   dom.hit.disabled = !table.canAct;
   dom.stand.disabled = !table.canAct;
-  dom.double.disabled = !table.canAct || !canDouble(mySeat, state.player.bankroll);
+  dom.double.disabled = !table.canAct || !(activeHand?.canDouble ?? table.canDouble);
+  dom.split.disabled = !table.canAct || !(activeHand?.canSplit ?? table.canSplit);
   dom.leaveSeat.disabled = !mySeat || !["waiting", "settled"].includes(table.phase);
   dom.reload.disabled = !["waiting", "settled"].includes(table.phase);
 }
@@ -260,21 +305,15 @@ function renderLeaderboard(rows) {
 }
 
 function setButtonsBusy(isBusy) {
-  [dom.startHand, dom.hit, dom.stand, dom.double, dom.leaveSeat, dom.reload].forEach((button) => {
+  [dom.startHand, dom.hit, dom.stand, dom.double, dom.split, dom.leaveSeat, dom.reload].forEach((button) => {
     button.classList.toggle("busy", isBusy);
   });
 }
 
-function canDouble(seat, bankroll) {
-  if (!seat || !seat.cards || seat.cards.length !== 2 || seat.resolved || seat.doubled) return false;
-  if (bankroll < seat.bet) return false;
-  const total = seat.total;
-  return total === 9 || total === 10 || total === 11;
-}
-
 function formatSeatResult(seat) {
   if (!seat.playerId) return "Pick one chip, then sit.";
-  if (seat.turn) return "轮到这个座位行动";
+  const activeHand = seat.hands?.find((hand) => hand.turn);
+  if (activeHand) return `Action on hand ${activeHand.handIndex + 1}.`;
   if (seat.result) {
     const net = seat.settledNet ? ` · ${seat.settledNet > 0 ? "+" : ""}${formatMoney(seat.settledNet)}` : "";
     return `${seat.result}${net}`;
@@ -284,6 +323,29 @@ function formatSeatResult(seat) {
   }
   if (seat.active) return "本手进行中";
   return "等待发牌";
+}
+
+function formatHandStatus(hand) {
+  const net = hand.settledNet ? ` ${hand.settledNet > 0 ? "+" : ""}${formatMoney(hand.settledNet)}` : "";
+  if (hand.result) return `${hand.result}${net}`;
+  if (hand.turn) return "Your action";
+  if (hand.splitAceHand) return "Split ace: one card only";
+  return hand.cards?.length ? "In progress" : "Waiting";
+}
+
+function renderBankrollFeedback(bankroll) {
+  if (lastBankroll === null) {
+    lastBankroll = bankroll;
+    return;
+  }
+  const delta = bankroll - lastBankroll;
+  lastBankroll = bankroll;
+  if (!delta || state?.blackjack?.phase !== "settled") return;
+  const toast = document.createElement("div");
+  toast.className = `payout-toast ${delta > 0 ? "win" : "lose"}`;
+  toast.textContent = delta > 0 ? `Dealer pays ${formatMoney(delta)}` : `Dealer collects ${formatMoney(Math.abs(delta))}`;
+  document.body.appendChild(toast);
+  window.setTimeout(() => toast.remove(), 1800);
 }
 
 function formatPhase(phase) {
