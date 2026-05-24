@@ -13,6 +13,7 @@ const dom = {
   reloads: document.querySelector("#reloads"),
   shoe: document.querySelector("#shoe"),
   cardsLeft: document.querySelector("#cards-left"),
+  dealerPanel: document.querySelector(".dealer-panel"),
   dealerTotal: document.querySelector("#dealer-total"),
   dealerCards: document.querySelector("#dealer-cards"),
   phasePill: document.querySelector("#phase-pill"),
@@ -42,6 +43,7 @@ let polling = null;
 let busy = false;
 let lastBankroll = null;
 let seenSeatResults = new Set();
+let seenDealerBustResults = new Set();
 
 dom.playerName.value = playerName;
 dom.roomCode.value = room;
@@ -158,6 +160,7 @@ function render() {
   dom.dealerTotal.textContent = table.dealer.total ?? "--";
 
   renderCards(dom.dealerCards, table.dealer.cards, `r${table.roundNumber}-dealer`);
+  renderDealerBust(table);
   renderSeats(table);
   renderLeaderboard(state.leaderboard);
   renderButtons(table);
@@ -272,6 +275,28 @@ function getSeatResultBurst(table, seat) {
   return { tone, title, subtitle, animate };
 }
 
+function renderDealerBust(table) {
+  if (!dom.dealerPanel || table.phase !== "settled" || !(table.dealer.total > 21)) return;
+  const key = [
+    table.roundNumber,
+    table.dealer.total,
+    table.dealer.cards?.map((card) => card.id).join("|"),
+  ].join("-");
+  if (seenDealerBustResults.has(key)) return;
+  seenDealerBustResults.add(key);
+
+  dom.dealerPanel.querySelectorAll(".dealer-bust-burst").forEach((node) => node.remove());
+  const burst = document.createElement("div");
+  burst.className = "dealer-bust-burst";
+  burst.setAttribute("aria-hidden", "true");
+  burst.innerHTML = `
+    <strong>DEALER BUST</strong>
+    <span>\u5e84\u5bb6\u7206\u724c</span>
+  `;
+  dom.dealerPanel.appendChild(burst);
+  window.setTimeout(() => burst.remove(), 3200);
+}
+
 function getSeatActionLabel(seat) {
   if (seat.self) {
     if (seat.needsBet || seat.bet < 25) return `Rebet +${formatMoney(selectedBet)}`;
@@ -308,7 +333,7 @@ function buildCard(card) {
   const node = document.createElement("div");
   if (card.faceDown) {
     node.className = "card back";
-    node.innerHTML = "<span class=\"back-logo\"><b>YANG'S</b><b>BLACKJACK</b></span>";
+    node.innerHTML = "<span class=\"back-logo\"><b>YANG'S</b><strong>21</strong><em>BLACKJACK</em></span>";
     return node;
   }
   node.className = `card ${card.red ? "red" : "black"}`;
