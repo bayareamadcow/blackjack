@@ -178,6 +178,17 @@ function render() {
 
 function renderJoinPromptSeats(message = "Enter your name, then join the table.") {
   dom.seatGrid.replaceChildren();
+  const banner = document.createElement("article");
+  banner.className = "join-table-banner";
+  banner.innerHTML = `
+    <div>
+      <span>Join Table</span>
+      <strong>\u8fdb\u5165\u684c\u5b50</strong>
+      <p>${escapeHtml(message)} / \u9009\u597d\u540d\u5b57\u540e\u5c31\u53ef\u4ee5\u5750\u4e0b</p>
+    </div>
+    <button class="join" data-profile-join type="button">\u8fdb\u5165\u684c\u5b50 / Join Table</button>
+  `;
+  dom.seatGrid.appendChild(banner);
   for (let seat = 1; seat <= 5; seat += 1) {
     const card = document.createElement("article");
     card.className = "seat-card empty join-missing";
