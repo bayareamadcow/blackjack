@@ -51,7 +51,9 @@ dom.roomCode.value = room;
 if (!playerName) {
   dom.nameGate.hidden = false;
   dom.gateName.focus();
+  renderJoinPromptSeats();
 } else {
+  renderJoinPromptSeats("Connecting to the table...");
   refreshNow();
 }
 
@@ -79,6 +81,11 @@ dom.chipRow.addEventListener("click", (event) => {
 });
 
 dom.seatGrid.addEventListener("click", (event) => {
+  const profileButton = event.target.closest("[data-profile-join]");
+  if (profileButton) {
+    saveIdentity(dom.playerName.value || dom.gateName.value, dom.roomCode.value || room);
+    return;
+  }
   const joinButton = event.target.closest("[data-join-seat]");
   if (!joinButton) return;
   sendAction("seat", { seat: Number(joinButton.dataset.joinSeat), bet: selectedBet, mode: "add" });
@@ -136,6 +143,8 @@ async function sendAction(endpoint, payload = {}, options = {}) {
   } catch (error) {
     if (!options.quiet) {
       dom.tableMessage.textContent = error.message;
+    } else if (!state) {
+      renderJoinPromptSeats(error.message);
     }
   } finally {
     busy = false;
@@ -165,6 +174,33 @@ function render() {
   renderLeaderboard(state.leaderboard);
   renderButtons(table);
   renderBankrollFeedback(player.bankroll);
+}
+
+function renderJoinPromptSeats(message = "Enter your name, then join the table.") {
+  dom.seatGrid.replaceChildren();
+  for (let seat = 1; seat <= 5; seat += 1) {
+    const card = document.createElement("article");
+    card.className = "seat-card empty join-missing";
+    card.innerHTML = `
+      <div class="seat-header">
+        <div class="avatar">${seat}</div>
+        <div class="seat-name">
+          <span>Seat ${seat}</span>
+          <h3>Open</h3>
+        </div>
+        <div class="seat-bet">+$${selectedBet}</div>
+      </div>
+      <div class="seat-total">Join Table</div>
+      <div class="seat-result">${escapeHtml(message)} / \u8bf7\u5148\u8fdb\u5165\u684c\u5b50</div>
+      <div class="seat-hands placeholder-hands">
+        <div class="empty-seat-icon">+</div>
+      </div>
+      <div class="seat-actions">
+        <button class="join" data-profile-join type="button">\u8fdb\u5165\u684c\u5b50 / Join Table</button>
+      </div>
+    `;
+    dom.seatGrid.appendChild(card);
+  }
 }
 
 function renderSeats(table) {

@@ -486,6 +486,29 @@ button {
   opacity: 0.76;
 }
 
+.seat-card.join-missing {
+  min-height: 250px;
+  border-style: dashed;
+  background: linear-gradient(145deg, rgba(16, 105, 68, 0.64), rgba(4, 31, 20, 0.78));
+}
+
+.placeholder-hands {
+  min-height: 76px;
+  place-items: center;
+}
+
+.empty-seat-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 2px dashed rgba(255, 226, 138, 0.52);
+  border-radius: 50%;
+  color: var(--gold);
+  font-size: 2rem;
+  font-weight: 1000;
+}
+
 .seat-result-burst {
   position: absolute;
   top: 48%;
