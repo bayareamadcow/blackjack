@@ -1,4 +1,6 @@
-const API_BASE = "https://mad-cow-baccarat.0413zhouyang.workers.dev";
+const CLOUD_API_BASE = "https://mad-cow-baccarat.0413zhouyang.workers.dev";
+const SERVER_URL_KEY = "madCowBaccaratServerUrl";
+const API_BASE = getConfiguredApiBase();
 const PLAYER_ID_KEY = "madCowBaccaratPlayerId";
 const PLAYER_NAME_KEY = "madCowBaccaratPlayerName";
 const ROOM_KEY = "madCowCasinoRoom";
@@ -114,6 +116,42 @@ function saveIdentity(nextName, nextRoom) {
   dom.roomCode.value = room;
   dom.nameGate.hidden = true;
   refreshNow();
+}
+
+function getConfiguredApiBase() {
+  const fromUrl = new URLSearchParams(window.location.search).get("server");
+  if (fromUrl) {
+    const normalized = normalizeServerUrl(fromUrl);
+    saveApiBase(normalized);
+    return normalized;
+  }
+
+  try {
+    const saved = localStorage.getItem(SERVER_URL_KEY);
+    if (saved) return normalizeServerUrl(saved);
+  } catch {
+    // Local storage can be unavailable in strict browser modes.
+  }
+
+  return getFallbackApiBase();
+}
+
+function normalizeServerUrl(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function getFallbackApiBase() {
+  if (window.location.hostname.endsWith("github.io")) return CLOUD_API_BASE;
+  if (["http:", "https:"].includes(window.location.protocol)) return window.location.origin;
+  return CLOUD_API_BASE;
+}
+
+function saveApiBase(url) {
+  try {
+    localStorage.setItem(SERVER_URL_KEY, url);
+  } catch {
+    // Local storage can be unavailable in strict browser modes.
+  }
 }
 
 async function refreshNow() {
